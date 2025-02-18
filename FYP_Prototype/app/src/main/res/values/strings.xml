@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Quartermaster</string>
+    <string name="title_activity_landing_page">landing_page</string>
+</resources>
