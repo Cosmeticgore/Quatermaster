@@ -11,7 +11,8 @@ data class user(
     val location: user_loc = user_loc(),
     val team: String = "None",
     val role: String = "Player",
-    val status: String = "Nominal"
+    val status: String = "Nominal",
+    val not_token: String = ""
 )
 
 

@@ -3,7 +3,12 @@ package com.example.fyp_prototype
 import android.Manifest
 import android.R
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
@@ -69,20 +74,22 @@ class MainActivity : ComponentActivity() {
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
         Configuration.getInstance().userAgentValue = "AirsoftAPP"
 
+
         val Session_ID = intent.getStringExtra("SESSION_ID")
         val User_ID = intent.getStringExtra("USER")
         val role = intent.getStringExtra("ROLE")
-
-        val Notificationhandler = notificationhandler(this)
 
         val User = user(
             userId = User_ID.toString(),
             location = user_loc(0.0,0.0),
             role = role.toString()
         )
-
-
-
+        Intent(applicationContext, LocationService::class.java).apply{
+            putExtra("SESSION_ID", Session_ID)
+            putExtra("USER",User.userId)
+            action = LocationService.ACTION_START
+            startService(this)
+        }
         setContent {
             Box(modifier = Modifier.fillMaxSize()) { // UI
                 OsmdroidMapView(User,Session_ID.toString())
@@ -140,7 +147,9 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.FOREGROUND_SERVICE_LOCATION
         )
 
         for (permission in permissions) { // check to see if they are granted
@@ -170,7 +179,7 @@ class MainActivity : ComponentActivity() {
                     if (locationProvider.lastKnownLocation != null){
                         User.location.latitude = locationProvider.lastKnownLocation.latitude
                         User.location.longitude = locationProvider.lastKnownLocation.longitude
-                        updateMyLocation(User,User.location.latitude,User.location.longitude, S_ID) //Updates my location in the database
+                        //updateMyLocation(User,User.location.latitude,User.location.longitude, S_ID) //Updates my location in the database
                         updateLocations(mapView, User, S_ID) // gets the other users location from the database and updates them and marks them
                     }
                     delay(15000) // delay of 15 seconds between updates
@@ -253,7 +262,7 @@ class MainActivity : ComponentActivity() {
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
     }
 
-    // updates the users location in the database
+    // updates the users location in the database TODO TURN THIS INTO A SERVICE FOR BACKGROUND TRACKING
     fun updateMyLocation(user_u: user, latitude: Double, longitude: Double, S_ID: String) {
         val curlocref = databaseRef.child(S_ID).child("users").child(user_u.userId).child("location")
 
