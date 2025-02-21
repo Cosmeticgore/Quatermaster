@@ -42,7 +42,8 @@
         </activity>
 
         <service android:name=".LocationService"
-            android:foregroundServiceType="location"/>
+            android:foregroundServiceType="location"
+            android:stopWithTask="true"/>
     </application>
 
 
