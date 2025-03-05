@@ -22,6 +22,8 @@ class LocationService: Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: LocationClient
+    private lateinit var userdata: AppData
+
 
     var Session_ID = ""
     var User_ID = ""
@@ -41,11 +43,12 @@ class LocationService: Service() {
             applicationContext,
             LocationServices.getFusedLocationProviderClient(applicationContext)
         )
+        userdata = AppData.getInstance(application)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Session_ID = intent?.getStringExtra("SESSION_ID").toString()
-        User_ID = intent?.getStringExtra("USER").toString()
+        Session_ID = userdata.Session_ID.value.toString()
+        User_ID = userdata.user_ID.value.toString()
         when(intent?.action){
 
             ACTION_START -> start()
@@ -67,7 +70,7 @@ class LocationService: Service() {
         serviceScope.launch {
             locationClient.getLocationUpdates(10000L)
                 .catch { e -> e.printStackTrace() }
-                .collect { location ->  // Changed from onEach to collect
+                .collect { location ->
                     val lat = location.latitude.toString()
                     val long = location.longitude.toString()
 
@@ -80,12 +83,13 @@ class LocationService: Service() {
                     )
 
                     try {
-                        // Use suspending setValue instead of callbacks for better error handling
                         curlocref.setValue(locationData).await()
                         Log.d("UpdateLocations", "Location updated successfully")
                     } catch (e: Exception) {
                         Log.e("UpdateLocations", "Failed to update location", e)
                     }
+
+
                 }
         }
     }

@@ -44,6 +44,14 @@
         <service android:name=".LocationService"
             android:foregroundServiceType="location"
             android:stopWithTask="true"/>
+
+        <service android:name=".NotificationService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"></action>
+            </intent-filter>
+        </service>
+
     </application>
 
 

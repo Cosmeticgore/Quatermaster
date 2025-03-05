@@ -12,7 +12,7 @@ data class user(
     val team: String = "None",
     val role: String = "Player",
     val status: String = "Nominal",
-    val not_token: String = ""
+    var not_token: String = ""
 )
 
 

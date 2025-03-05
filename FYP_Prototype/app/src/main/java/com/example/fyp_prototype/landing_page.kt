@@ -2,6 +2,8 @@ package com.example.fyp_prototype
 
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings.Global.getString
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,15 +29,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.fyp_prototype.ui.theme.FYP_PrototypeTheme
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlin.random.Random
 
 //This is the Landing page, users start her when the app is opened
 
 class landing_page : ComponentActivity() {
+    lateinit var userdata: AppData
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        userdata = AppData.getInstance(application)
+
         setContent { // UI
             FYP_PrototypeTheme {
                 Box(
@@ -47,9 +56,9 @@ class landing_page : ComponentActivity() {
                     Column( // make sure the all the buttons stay in the middle
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Join_session()
+                        Join_session(userdata)
                         Spacer(Modifier.height(32.dp))
-                        Create_session()
+                        Create_session(userdata)
                     }
                 }
             }
@@ -59,7 +68,7 @@ class landing_page : ComponentActivity() {
 
 // this is the join session button, it has the logic for joining a session inside it
 @Composable
-fun Join_session() {
+fun Join_session(userdata : AppData) {
     var code_input by remember { mutableStateOf("") }
     val context = LocalContext.current
     val database = Firebase.database
@@ -72,14 +81,15 @@ fun Join_session() {
             if (code_input.length == 6) {
 
                 databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
-                    if (snapshot.exists()){
+
                         val newUser = user( //create a new user
-                            userId = "user_${System.currentTimeMillis()}",
+                            userId = "user_${System.currentTimeMillis()}"
                         )
+
+                        if (snapshot.exists()){
                         databaseRef.child(code_input).child("users").child(newUser.userId).setValue(newUser).addOnSuccessListener {
                             val Intent = Intent(context,MainActivity::class.java).apply{ // pass values to the main activity
-                                putExtra("SESSION_ID", code_input)
-                                putExtra("USER",newUser.userId)
+                                userdata.updateAppData(newUser.userId, code_input, "Player")
                             }
                             context.startActivity(Intent) // move to main
                         }.addOnFailureListener{ e -> // error handling
@@ -120,7 +130,7 @@ fun Join_session() {
 
 // this is the create session button, has all the logic inside
 @Composable
-fun Create_session() {
+fun Create_session(userdata : AppData) {
     val database = Firebase.database
     val databaseRef = database.getReference("sessions")
     val context = LocalContext.current
@@ -137,12 +147,19 @@ fun Create_session() {
                 session_Id = id,
                 users = mapOf(newUser.userId to newUser)
             )
+
+            FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    Log.w( "Fetching FCM registration token failed", task.exception)
+                    return@OnCompleteListener
+                }
+                newUser.not_token = task.result
+            })
+
             databaseRef.child(id).setValue(session) // adds that session to the database
                 .addOnSuccessListener {
                     val Intent = Intent(context,MainActivity::class.java).apply{ // passes values to main
-                        putExtra("SESSION_ID", id)
-                        putExtra("USER",newUser.userId)
-                        putExtra("ROLE",newUser.role)
+                        userdata.updateAppData(newUser.userId, id, newUser.role)
                     }
                     context.startActivity(Intent) // move to main
                 }
@@ -155,3 +172,4 @@ fun Create_session() {
         Text("Create Session")
     }
 }
+

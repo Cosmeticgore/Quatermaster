@@ -2,6 +2,7 @@ package com.example.fyp_prototype
 
 import android.Manifest
 import android.R
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,7 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,11 +40,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -63,8 +67,10 @@ class MainActivity : ComponentActivity() {
     private val databaseRef = database.getReference("sessions")
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private val userMarkers = mutableMapOf<String,Marker>()
+    private lateinit var userdata: AppData
 
 
+    @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Request necessary permissions for locations etc
@@ -73,11 +79,11 @@ class MainActivity : ComponentActivity() {
         val ctx = applicationContext
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
         Configuration.getInstance().userAgentValue = "AirsoftAPP"
+        userdata = AppData.getInstance(application)
 
-
-        val Session_ID = intent.getStringExtra("SESSION_ID")
-        val User_ID = intent.getStringExtra("USER")
-        val role = intent.getStringExtra("ROLE")
+        val Session_ID = userdata.Session_ID.value
+        val User_ID = userdata.user_ID.value
+        val role = userdata.Role.value
 
         val User = user(
             userId = User_ID.toString(),
@@ -85,11 +91,25 @@ class MainActivity : ComponentActivity() {
             role = role.toString()
         )
         Intent(applicationContext, LocationService::class.java).apply{
-            putExtra("SESSION_ID", Session_ID)
-            putExtra("USER",User.userId)
             action = LocationService.ACTION_START
             startService(this)
         }
+        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("Token Creation", "Fetching FCM registration token failed", task.exception)
+                return@OnCompleteListener
+            }
+
+            // Get new FCM registration token
+            val token = task.result
+            Log.d("FCM TOKEN", token)
+            databaseRef.child(Session_ID.toString()).child("users").child(User_ID.toString()).child("not_token").setValue(token.toString()).addOnSuccessListener{
+                Log.d("FCM TOKEN", "Token Updated")
+            }.addOnFailureListener{
+                Log.d("FCM TOKEN", "Failed to upload token")
+            }
+
+        })
         setContent {
             Box(modifier = Modifier.fillMaxSize()) { // UI
                 OsmdroidMapView(User,Session_ID.toString())
@@ -141,6 +161,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private fun requestPermissions() { // put needed permissions here
         val permissions = arrayOf(
             Manifest.permission.INTERNET,
@@ -245,7 +266,7 @@ class MainActivity : ComponentActivity() {
         ping.message_con = "Ping"
         ping.title = "Ping"
         ping.type = 1
-        databaseRef.child(S_ID).child("messages").setValue(ping)
+        databaseRef.child(S_ID).child("messages").child(ping.ID).setValue(ping)
     }
 
     // marks a user on the map
@@ -260,25 +281,6 @@ class MainActivity : ComponentActivity() {
         marker.position = GeoPoint(user.location.latitude, user.location.longitude)
         marker.title = "User: ${user.userId}"
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
-    }
-
-    // updates the users location in the database TODO TURN THIS INTO A SERVICE FOR BACKGROUND TRACKING
-    fun updateMyLocation(user_u: user, latitude: Double, longitude: Double, S_ID: String) {
-        val curlocref = databaseRef.child(S_ID).child("users").child(user_u.userId).child("location")
-
-        // map the location data
-        val locationData = mapOf(
-            "latitude" to latitude,
-            "longitude" to longitude
-        )
-        // Update the location in Firebase
-        curlocref.setValue(locationData)
-            .addOnSuccessListener {
-                Log.d("UpdateLocations", "Location updated successfully")
-            }
-            .addOnFailureListener { e ->
-                Log.e("UpdateLocations", "Failed to update location", e)
-            }
     }
 }
 
