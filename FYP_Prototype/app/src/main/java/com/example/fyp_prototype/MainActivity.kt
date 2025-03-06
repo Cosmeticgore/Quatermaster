@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotApplyResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,11 +42,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.functions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +57,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -68,6 +74,8 @@ class MainActivity : ComponentActivity() {
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private val userMarkers = mutableMapOf<String,Marker>()
     private lateinit var userdata: AppData
+    private val functions: FirebaseFunctions = Firebase.functions
+
 
 
     @SuppressLint("NewApi")
@@ -261,12 +269,30 @@ class MainActivity : ComponentActivity() {
             })
     }
 
-    private fun ping(S_ID: String){
-        val ping = message()
-        ping.message_con = "Ping"
-        ping.title = "Ping"
-        ping.type = 1
-        databaseRef.child(S_ID).child("messages").child(ping.ID).setValue(ping)
+    private fun ping(sessionId: String): Task<String> {
+        // Create a HashMap with the correct structure
+        val data = hashMapOf(
+            "sessionId" to sessionId,  // Make sure sessionId is not empty
+            "title" to "ping",
+            "message" to "ping"
+        )
+
+        // Log what you're sending
+        Log.d("FCM_CALL", "Sending data: $data")
+
+        return functions.getHttpsCallable("sendAdminNotifications")
+            .call(data)
+            .continueWith { task ->
+                if (task.isSuccessful) {
+                    val result = task.result?.data
+                    Log.d("FCM_CALL", "Success: $result")
+                    "Success: Notification sent"
+                } else {
+                    val exception = task.exception
+                    Log.e("FCM_CALL", "Error: ${exception?.message}")
+                    "Error: ${exception?.message}"
+                }
+            }
     }
 
     // marks a user on the map
@@ -282,6 +308,7 @@ class MainActivity : ComponentActivity() {
         marker.title = "User: ${user.userId}"
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
     }
+
 }
 
 

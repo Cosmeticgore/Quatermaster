@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(platform(libs.firebase.bom))
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation(libs.firebase.database)
     implementation(libs.osmdroid)
     implementation(libs.androidx.core.ktx)
@@ -64,4 +65,5 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.play.services.location)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.functions)
 }
