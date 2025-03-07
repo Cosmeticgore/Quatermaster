@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    val nav_version = "2.8.8"
     implementation(platform(libs.firebase.bom))
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation(libs.firebase.database)
@@ -66,4 +67,5 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.functions)
+    implementation("androidx.navigation:navigation-compose:$nav_version")
 }

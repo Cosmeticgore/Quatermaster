@@ -1,12 +1,8 @@
 package com.example.fyp_prototype
 
 import android.Manifest
-import android.R
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -22,27 +18,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotApplyResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
@@ -60,8 +50,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -121,57 +109,15 @@ class MainActivity : ComponentActivity() {
             }
 
         })
-        change_team(userdata, this)
+        changeteam(userdata, this)
+
+        //UI
         setContent {
-            Box(modifier = Modifier.fillMaxSize()) { // UI
-                OsmdroidMapView(User,Session_ID.toString())
-
-                // Session ID Box in top left corner
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .background(
-                            color = Color.White.copy(alpha = 0.8f),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(8.dp)
-                        .align(Alignment.TopStart)
-                ) {
-                    Text( //displays the session id for the user to share
-                        text = "Session ID: $Session_ID",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.BottomStart)
-                ) {
-                    Button(
-                        onClick = { ping(Session_ID.toString()) },
-                        modifier = Modifier
-                            .background(
-                                color = Color.White.copy(alpha = 0.8f),
-                                shape = RoundedCornerShape(8.dp)
-                            ),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White.copy(alpha = 0.8f)
-                        )
-                    ) {
-                        Text(
-                            text = "Ping",
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
+            HomeScreen(User, Session_ID.toString())
         }
     }
+
+    //FUNCTIONS
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private fun requestPermissions() { // put needed permissions here
@@ -192,58 +138,6 @@ class MainActivity : ComponentActivity() {
                 break
             }
         }
-    }
-
-    @Composable
-    fun OsmdroidMapView(User: user, S_ID : String) { // view that displays map
-        val context = LocalContext.current
-        val locationProvider = GpsMyLocationProvider(context)
-        val mapView = remember { MapView(context) }
-
-        val locationOverlay = remember { // needed for location to work
-            MyLocationNewOverlay(locationProvider, mapView).apply {
-                enableMyLocation()
-            }
-        }
-
-        DisposableEffect(Unit) {
-            val job = scope.launch { // co routine to have these tasks run with the rest of the app
-                while(isActive){ //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
-                    if (locationProvider.lastKnownLocation != null){
-                        User.location.latitude = locationProvider.lastKnownLocation.latitude
-                        User.location.longitude = locationProvider.lastKnownLocation.longitude
-                        //updateMyLocation(User,User.location.latitude,User.location.longitude, S_ID) //Updates my location in the database
-                        updateLocations(mapView, User, S_ID) // gets the other users location from the database and updates them and marks them
-                    }
-                    delay(15000) // delay of 15 seconds between updates
-                }
-            }
-
-            onDispose { //cleanup
-                job.cancel()
-                locationOverlay.disableMyLocation()
-                userMarkers.clear()
-            }
-        }
-
-        AndroidView( // this is the map
-            modifier = Modifier.fillMaxSize(),//sets the view to cover the entire screen
-            factory = {
-                mapView.apply {
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    minZoomLevel = 3.0
-                    maxZoomLevel = 20.0
-                    controller.setZoom(10.0)
-                    controller.setCenter(GeoPoint(48.8583, 2.2944))
-                    setBuiltInZoomControls(true)
-                    setMultiTouchControls(true)
-                    overlays.add(locationOverlay)
-                }
-            },
-            update = { view ->
-                // Update logic if needed
-            }
-        )
     }
 
     // gets all the users in the database and marks them on the map
@@ -312,24 +206,137 @@ class MainActivity : ComponentActivity() {
         marker.title = "User: ${user.userId}"
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
     }
+
+    private fun changeteam(User: AppData, context: Context) {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+        builder.setTitle("Select Team")
+            .setNegativeButton("RED") { dialog, which ->
+                User.update_team("Red")
+            }
+            .setPositiveButton("BLUE") { dialog, which ->
+                User.update_team("Blue")
+            }
+            .setNeutralButton("NONE") { dialog, which ->
+                User.update_team("None")
+            }
+        val dialog: AlertDialog = builder.create()
+        dialog.show()
+    }
+
+
+    //COMPOSABLE FUNCTIONS
+
+
+    @Composable
+    fun OsmdroidMapView(User: user, S_ID : String) { // view that displays map
+        val context = LocalContext.current
+        val locationProvider = GpsMyLocationProvider(context)
+        val mapView = remember { MapView(context) }
+
+        val locationOverlay = remember { // needed for location to work
+            MyLocationNewOverlay(locationProvider, mapView).apply {
+                enableMyLocation()
+            }
+        }
+
+        DisposableEffect(Unit) {
+            val job = scope.launch { // co routine to have these tasks run with the rest of the app
+                while(isActive){ //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
+                    if (locationProvider.lastKnownLocation != null){
+                        User.location.latitude = locationProvider.lastKnownLocation.latitude
+                        User.location.longitude = locationProvider.lastKnownLocation.longitude
+                        updateLocations(mapView, User, S_ID) // gets the other users location from the database and updates them and marks them
+                    }
+                    delay(15000) // delay of 15 seconds between updates
+                }
+            }
+
+            onDispose { //cleanup
+                job.cancel()
+                locationOverlay.disableMyLocation()
+                userMarkers.clear()
+            }
+        }
+
+        AndroidView( // this is the map
+            modifier = Modifier.fillMaxSize(),//sets the view to cover the entire screen
+            factory = {
+                mapView.apply {
+                    setTileSource(TileSourceFactory.MAPNIK)
+                    minZoomLevel = 3.0
+                    maxZoomLevel = 20.0
+                    controller.setZoom(10.0)
+                    controller.setCenter(GeoPoint(48.8583, 2.2944))
+                    setBuiltInZoomControls(true)
+                    setMultiTouchControls(true)
+                    overlays.add(locationOverlay)
+                }
+            },
+            update = { view ->
+                // Update logic if needed
+            }
+        )
+    }
+
+    @Composable
+    private fun HomeScreen(User: user, Session_ID: String){
+        Box(modifier = Modifier.fillMaxSize()) { // UI
+            OsmdroidMapView(User,Session_ID)
+
+            // Session ID Box in top left corner
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .background(
+                        color = Color.White.copy(alpha = 0.8f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(8.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                Text( //displays the session id for the user to share
+                    text = "Session ID: $Session_ID",
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.BottomStart)
+            ) {
+                Button(
+                    onClick = { ping(Session_ID) },
+                    modifier = Modifier
+                        .background(
+                            color = Color.White.copy(alpha = 0.8f),
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "Ping",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
 }
 
 
-private fun change_team(User: AppData, context: Context) {
-    val builder: AlertDialog.Builder = AlertDialog.Builder(context)
-    builder.setTitle("Select Team")
-        .setNegativeButton("RED") { dialog, which ->
-            User.update_team("Red")
-        }
-        .setPositiveButton("BLUE") { dialog, which ->
-            User.update_team("Blue")
-        }
-        .setNeutralButton("NONE") { dialog, which ->
-            User.update_team("None")
-        }
-    val dialog: AlertDialog = builder.create()
-    dialog.show()
-}
+
+
+
+
+
+
 
 
 
