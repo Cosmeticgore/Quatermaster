@@ -3,6 +3,7 @@ package com.example.fyp_prototype
 import android.Manifest
 import android.R
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -21,8 +22,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -118,6 +121,7 @@ class MainActivity : ComponentActivity() {
             }
 
         })
+        change_team(userdata, this)
         setContent {
             Box(modifier = Modifier.fillMaxSize()) { // UI
                 OsmdroidMapView(User,Session_ID.toString())
@@ -203,7 +207,7 @@ class MainActivity : ComponentActivity() {
         }
 
         DisposableEffect(Unit) {
-            val job = scope.launch(){ // co routine to have these tasks run with the rest of the app
+            val job = scope.launch { // co routine to have these tasks run with the rest of the app
                 while(isActive){ //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
                     if (locationProvider.lastKnownLocation != null){
                         User.location.latitude = locationProvider.lastKnownLocation.latitude
@@ -308,9 +312,24 @@ class MainActivity : ComponentActivity() {
         marker.title = "User: ${user.userId}"
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
     }
-
 }
 
+
+private fun change_team(User: AppData, context: Context) {
+    val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+    builder.setTitle("Select Team")
+        .setNegativeButton("RED") { dialog, which ->
+            User.update_team("Red")
+        }
+        .setPositiveButton("BLUE") { dialog, which ->
+            User.update_team("Blue")
+        }
+        .setNeutralButton("NONE") { dialog, which ->
+            User.update_team("None")
+        }
+    val dialog: AlertDialog = builder.create()
+    dialog.show()
+}
 
 
 
