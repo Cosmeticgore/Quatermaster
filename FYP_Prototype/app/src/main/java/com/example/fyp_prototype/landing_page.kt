@@ -89,7 +89,8 @@ fun Join_session(userdata : AppData) {
                         if (snapshot.exists()){
                         databaseRef.child(code_input).child("users").child(newUser.userId).setValue(newUser).addOnSuccessListener {
                             val Intent = Intent(context,MainActivity::class.java).apply{ // pass values to the main activity
-                                userdata.updateAppData(newUser.userId, code_input, "Player")
+                                userdata.updateAppData(newUser.userId, code_input, "Player",
+                                    userdata.Team.value.toString(), userdata.Status.value.toString() )
                             }
                             context.startActivity(Intent) // move to main
                         }.addOnFailureListener{ e -> // error handling
@@ -159,7 +160,7 @@ fun Create_session(userdata : AppData) {
             databaseRef.child(id).setValue(session) // adds that session to the database
                 .addOnSuccessListener {
                     val Intent = Intent(context,MainActivity::class.java).apply{ // passes values to main
-                        userdata.updateAppData(newUser.userId, id, newUser.role)
+                        userdata.updateAppData(newUser.userId, id, newUser.role,userdata.Team.value.toString(), userdata.Status.value.toString())
                     }
                     context.startActivity(Intent) // move to main
                 }

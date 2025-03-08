@@ -27,16 +27,12 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
     val Team = MutableLiveData<String>()
     val Status = MutableLiveData<String>()
 
-    fun updateAppData(UID: String, SID: String, role: String){
+    fun updateAppData(UID: String, SID: String, role: String, team: String, status: String){
         user_ID.value = UID
         Session_ID.value = SID
         Role.value = role
-    }
-
-    fun clearData() {
-        user_ID.value = null
-        Session_ID.value = null
-        Role.value = null
+        Team.value = team
+        Status.value = status
     }
 
     fun update_team(team: String) {

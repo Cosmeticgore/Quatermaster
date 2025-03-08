@@ -71,8 +71,19 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
 class MainActivity : ComponentActivity() {
@@ -173,6 +184,14 @@ class MainActivity : ComponentActivity() {
                             if (userData != null) {
                                 if (userData.userId != user.userId && userData.team == user.team || user.role == "Admin") { //only show location if you are an admin or they are on your team
                                     updatemarker(mapView, userData)
+                                }
+
+                                if(userData.userId == user.userId){
+                                    userdata.updateAppData(userData.userId,
+                                        userdata.Session_ID.value.toString(),
+                                        userData.role,
+                                        userData.team,
+                                        userData.status)
                                 }
 
                             } else { //error handling
@@ -401,7 +420,7 @@ class MainActivity : ComponentActivity() {
                 )
             ) {
                 Text(
-                    text = "View Session Players",
+                    text = "View Players",
                     color = Color.Black,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
@@ -562,8 +581,162 @@ class MainActivity : ComponentActivity() {
                     text = "Team: ${user.team}",
                     style = MaterialTheme.typography.bodyMedium
                 )
+                if(userdata.Role.value == "Admin"){
+                    PlayerListDropdown(user)
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun PlayerListDropdown(user: user) {
+        var expanded by remember { mutableStateOf(false) }
+        var showTeamDialog by remember { mutableStateOf(false) }
+        var showRoleDialog by remember { mutableStateOf(false) }
+
+        val database = FirebaseDatabase.getInstance()
+        val databaseRef = database.getReference("sessions")
+
+        val sessionId = userdata.Session_ID.value.toString()
+
+        Box(
+            modifier = Modifier.padding(16.dp)
+        ){
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "More options")
             }
 
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Set Role") },
+                    onClick = {
+                        showRoleDialog = true
+                        expanded = false
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Set Team") },
+                    onClick = {
+                        showTeamDialog = true
+                        expanded = false
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Reset Status") },
+                    onClick = {
+                        databaseRef.child(sessionId).child("users").child(user.userId)
+                            .child("status").setValue("Nominal")
+                        expanded = false
+                    }
+                )
+
+                DropdownMenuItem(
+                    text = { Text("Kick Player") },
+                    onClick = {
+                        databaseRef.child(sessionId).child("users").child(user.userId)
+                            .removeValue()
+                        expanded = false
+                    }
+                )
+            }
+        }
+
+        if (showTeamDialog) {
+            ComposeAlertDialog(
+                onDismissRequest = { showTeamDialog = false },
+                title = { Text("Select Team") },
+                text = {
+                    Column {
+                        Button(
+                            onClick = {
+                                databaseRef.child(sessionId).child("users").child(user.userId)
+                                    .child("team").setValue("Red")
+                                showTeamDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("RED")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                databaseRef.child(sessionId).child("users").child(user.userId)
+                                    .child("team").setValue("Blue")
+                                showTeamDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("BLUE")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                databaseRef.child(sessionId).child("users").child(user.userId)
+                                    .child("team").setValue("None")
+                                showTeamDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("NONE")
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showTeamDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        if (showRoleDialog) {
+            ComposeAlertDialog(
+                onDismissRequest = { showRoleDialog = false },
+                title = { Text("Select Role") },
+                text = {
+                    Column {
+                        Button(
+                            onClick = {
+                                databaseRef.child(sessionId).child("users").child(user.userId)
+                                    .child("role").setValue("Admin")
+                                showRoleDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Admin")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                databaseRef.child(sessionId).child("users").child(user.userId)
+                                    .child("role").setValue("Player")
+                                showRoleDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Player")
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showRoleDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
