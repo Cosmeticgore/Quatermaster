@@ -13,7 +13,13 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +78,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +89,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -210,15 +223,41 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun ping(sessionId: String): Task<String> {
-        // Create a HashMap with the correct structure
         val data = hashMapOf(
-            "sessionId" to sessionId,  // Make sure sessionId is not empty
-            "title" to "ping",
-            "message" to "ping"
+            "sessionId" to sessionId,
+            "title" to "Player Needs Help",
+            "message" to "Non Urgent Help wanted"
         )
 
-        // Log what you're sending
         Log.d("FCM_CALL", "Sending data: $data")
+
+        userdata.update_status("Help_Needed")
+
+        return functions.getHttpsCallable("sendAdminNotifications")
+            .call(data)
+            .continueWith { task ->
+                if (task.isSuccessful) {
+                    val result = task.result?.data
+                    Log.d("FCM_CALL", "Success: $result")
+                    "Success: Notification sent"
+                } else {
+                    val exception = task.exception
+                    Log.e("FCM_CALL", "Error: ${exception?.message}")
+                    "Error: ${exception?.message}"
+                }
+            }
+    }
+
+    private fun urgentping(sessionId: String): Task<String> {
+        val data = hashMapOf(
+            "sessionId" to sessionId,
+            "title" to "Player is in Danger!",
+            "message" to "Player is in urgent need of help!"
+        )
+
+        Log.d("FCM_CALL", "Sending data: $data")
+
+        userdata.update_status("Critical")
 
         return functions.getHttpsCallable("sendAdminNotifications")
             .call(data)
@@ -250,19 +289,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun changeteam(User: AppData, context: Context) {
-        val builder: AlertDialog.Builder = AlertDialog.Builder(context)
-        builder.setTitle("Select Team")
-            .setNegativeButton("RED") { dialog, which ->
-                User.update_team("Red")
-            }
-            .setPositiveButton("BLUE") { dialog, which ->
-                User.update_team("Blue")
-            }
-            .setNeutralButton("NONE") { dialog, which ->
-                User.update_team("None")
-            }
-        val dialog: AlertDialog = builder.create()
-        dialog.show()
+
+        if (User.Team.value == "Red" || User.Team.value =="Blue" || User.Team.value == "None"){
+
+        }else{
+            val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+            builder.setTitle("Select Team")
+                .setNegativeButton("RED") { dialog, which ->
+                    User.update_team("Red")
+                }
+                .setPositiveButton("BLUE") { dialog, which ->
+                    User.update_team("Blue")
+                }
+                .setNeutralButton("NONE") { dialog, which ->
+                    User.update_team("None")
+                }
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+        }
+
     }
 
 
@@ -342,6 +387,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun MapHome(User: user, Session_ID: String, navController: NavController) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -353,33 +399,20 @@ class MainActivity : ComponentActivity() {
                     .align(Alignment.BottomStart)
             ) {
                 Button(
-                    onClick = { ping(Session_ID) },
+                    onClick = { navController.navigate("info") },
+
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.8f)
+                        containerColor = Color.Gray.copy(alpha = 0.8f)
                     )
                 ) {
                     Text(
-                        text = "Ping",
+                        text = "Info",
                         color = Color.Black,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
-            Button(
-                onClick = { navController.navigate("info") },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f)
-                )
-            ) {
-                Text(
-                    text = "Info",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
         }
     }
 
@@ -393,7 +426,7 @@ class MainActivity : ComponentActivity() {
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Session ID: $Session_ID",
@@ -406,42 +439,80 @@ class MainActivity : ComponentActivity() {
                     style = MaterialTheme.typography.titleMedium
                 )
 
+                Divider()
+
                 Text(
                     text = "Lorem Ipsum",
                     style = MaterialTheme.typography.bodyMedium
                 )
-            }
 
-            Button(
-                onClick = { navController.navigate("players") },
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f)
-                )
-            ) {
-                Text(
-                    text = "View Players",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+                Spacer(modifier = Modifier.weight(1f))
 
-            Button(
-                onClick = { navController.navigateUp() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 32.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f)
-                )
-            ) {
-                Text(
-                    text = "Back to Map",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Button(
+                    onClick = { navController.navigate("players") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "View Players",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { navController.navigateUp() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "Back to Map",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { ping(Session_ID) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "Request Help",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = { urgentping(Session_ID) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "EMERGENCY",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }

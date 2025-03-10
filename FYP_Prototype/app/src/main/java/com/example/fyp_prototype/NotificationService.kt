@@ -33,15 +33,15 @@ class NotificationService: FirebaseMessagingService() {
 
     @SuppressLint("MissingPermission")
     override fun onMessageReceived(message: RemoteMessage) {
-        val title = message.notification?.title
-        val text = message.notification?.body
+        val title = message.data["title"]
+        val text = message.data["message"]
 
         val channelId = "HEADS_UP_NOTIFICATION"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Ping Notification",
+                "Player Notifications",
                 NotificationManager.IMPORTANCE_HIGH
             )
             val notificationManager = getSystemService(NotificationManager::class.java)
@@ -51,7 +51,7 @@ class NotificationService: FirebaseMessagingService() {
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setSmallIcon(R.drawable.icon)
             .setAutoCancel(true)
             .build()
 
