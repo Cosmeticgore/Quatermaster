@@ -278,9 +278,50 @@ class MainActivity : ComponentActivity() {
     private fun updatemarker(mapView: MapView, user: user) {
         val marker = userMarkers.getOrPut(user.userId) {
             Marker(mapView).apply {
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                val teamMarkers = when (user.team) {
+                    "Red" -> R.drawable.redplayermarker
+                    "Blue" -> R.drawable.blueplayermarker
+                    else -> R.drawable.greenplayermarker
+                }
+
+                val customMarker = ContextCompat.getDrawable(mapView.context,teamMarkers)
+
+                customMarker?.let {
+                    it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
+                    icon = it
+                }
+
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 mapView.overlays.add(this)
             }
+        }
+
+        if (user.status != "Nominal") {
+
+            val helpkey = "${user.userId}_help"
+            val helpmarker = userMarkers.getOrPut(helpkey) {
+                Marker(mapView).apply {
+                    val warnMarkers = when (user.status) {
+                        "Help_Needed" -> R.drawable.help
+                        "Critical" -> R.drawable.emergency
+                        else -> R.drawable.help
+                    }
+
+                    val customMarker = ContextCompat.getDrawable(mapView.context,warnMarkers)
+
+                    customMarker?.let {
+                        it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
+                        icon = it
+                    }
+
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    mapView.overlays.add(this)
+                }
+            }
+
+            helpmarker.position = GeoPoint(user.location.latitude, user.location.longitude)
+            helpmarker.title = "User: ${user.userId}"
+            helpmarker.snippet = "Team: ${user.team}\nRole: ${user.role}"
         }
 
         marker.position = GeoPoint(user.location.latitude, user.location.longitude)
