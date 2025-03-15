@@ -26,6 +26,7 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
     val Role = MutableLiveData<String>()
     val Team = MutableLiveData<String>()
     val Status = MutableLiveData<String>()
+    val Username = MutableLiveData<String>()
 
     fun updateAppData(UID: String, SID: String, role: String, team: String, status: String){
         user_ID.value = UID
@@ -55,7 +56,8 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         val databaseRef = database.getReference("sessions")
         databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("role").setValue(role)
         Role.value = role
-
     }
+
+
 
 }

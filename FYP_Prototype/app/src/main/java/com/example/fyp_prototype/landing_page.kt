@@ -1,5 +1,6 @@
 package com.example.fyp_prototype
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings.Global.getString
@@ -7,16 +8,22 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +35,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.fyp_prototype.ui.theme.FYP_PrototypeTheme
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
@@ -44,26 +55,35 @@ class landing_page : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         userdata = AppData.getInstance(application)
-
+        val sharedPref = getSharedPreferences(
+            "Quartermaster.StoredData", Context.MODE_PRIVATE
+        )
         setContent { // UI
-            FYP_PrototypeTheme {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column( // make sure the all the buttons stay in the middle
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Join_session(userdata)
-                        Spacer(Modifier.height(32.dp))
-                        Create_session(userdata)
-                    }
-                }
-            }
+            App(userdata)
         }
     }
+}
+
+
+@Composable
+private fun App(userdata: AppData) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "join_create") {
+        composable("join_create") {
+            join_create(userdata)
+        }
+        composable("sites") {
+            site_view_screen()
+        }
+        composable("stats") {
+
+        }
+        composable("game_designer") {
+
+        }
+    }
+
 }
 
 // this is the join session button, it has the logic for joining a session inside it
@@ -83,7 +103,8 @@ fun Join_session(userdata : AppData) {
                 databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
 
                         val newUser = user( //create a new user
-                            userId = "user_${System.currentTimeMillis()}"
+                            userId = userdata.user_ID.value.toString(),
+                            username = userdata.Username.value.toString()
                         )
 
                         if (snapshot.exists()){
@@ -140,13 +161,14 @@ fun Create_session(userdata : AppData) {
             val id = Random.nextInt(100000, 999999).toString() //generates a session ID
 
             val newUser = user( //creates a new user
-                userId = "user_${System.currentTimeMillis()}", //generates a user id
-                role = "Admin"
+                userId = userdata.user_ID.value.toString(),
+                role = "Admin",
+                username = userdata.Username.value.toString()
             )
 
             val session = session( //creates the session
                 session_Id = id,
-                users = mapOf(newUser.userId to newUser)
+                users = mapOf(userdata.user_ID.value.toString() to newUser)
             )
 
             FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
@@ -173,4 +195,125 @@ fun Create_session(userdata : AppData) {
         Text("Create Session")
     }
 }
+
+@Composable
+fun join_create(userdata: AppData){
+    val context = LocalContext.current
+    val sharedPref = context.getSharedPreferences("Quatermaster.storedData", Context.MODE_PRIVATE)
+
+    val username = remember { mutableStateOf(sharedPref.getString("Quatermaster.key.username","")?: "") }
+    val UID = remember { mutableStateOf(sharedPref.getString("Quatermaster.key.UID","")?: "") }
+
+    val UIDset = remember { mutableStateOf(UID.value.isEmpty()) }
+    val showDialog = remember { mutableStateOf(username.value.isEmpty()) }
+
+    if (UIDset.value){
+        val newUID  = "user_${System.currentTimeMillis()}"
+        sharedPref.edit().putString("Quatermaster.key.UID",newUID).apply()
+        userdata.user_ID.value = newUID
+    }else{
+        userdata.user_ID.value = UID.value
+    }
+
+    if (showDialog.value){
+        usernameDialog(
+            onUsernameSubmitted = {
+                newUsername ->
+
+                sharedPref.edit().putString("Quatermaster.key.username",newUsername).apply()
+                username.value = newUsername
+                userdata.Username.value = newUsername
+                showDialog.value = false
+            }
+        )
+    }else{
+        userdata.Username.value = username.value
+    }
+    FYP_PrototypeTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column( // make sure the all the buttons stay in the middle
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Join_session(userdata)
+                Spacer(Modifier.height(32.dp))
+                Create_session(userdata)
+            }
+        }
+    }
+}
+
+@Composable
+fun site_view_screen(){
+
+}
+
+@Composable
+fun usernameDialog(onUsernameSubmitted: (String) -> Unit) {
+    var inputUsername by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
+
+    Dialog(onDismissRequest = { //NO DISMISS ALLOWED >:(
+     }) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surface
+        ){
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Set Callsign:",
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = inputUsername,
+                    onValueChange = {
+                        inputUsername = it
+                        isError = false
+                    },
+                    label = { Text("Callsign") },
+                    isError = isError,
+                    supportingText = if (isError) {
+                        @androidx.compose.runtime.Composable {
+                            Text("Callsign Cannot be Empty")
+                        }
+                    } else null,
+
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ){
+                    Button(
+                        onClick = {
+                            if (inputUsername.trim().isNotEmpty()) {
+                                onUsernameSubmitted(inputUsername.trim())
+                            } else {
+                                isError = true
+                            }
+                        }
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 

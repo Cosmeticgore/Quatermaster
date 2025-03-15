@@ -16,7 +16,8 @@ data class user(
     var team: String = "None",
     var role: String = "Player",
     var status: String = "Nominal",
-    var not_token: String = ""
+    var not_token: String = "",
+    var username: String = "Jeff"
 )
 
 
