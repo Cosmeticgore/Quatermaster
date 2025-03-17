@@ -13,13 +13,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,10 +73,8 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
@@ -90,12 +83,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -126,7 +113,7 @@ class MainActivity : ComponentActivity() {
 
         val User = user(
             userId = User_ID.toString(),
-            location = user_loc(0.0, 0.0),
+            location = locat(0.0, 0.0),
             role = role.toString()
         )
         Intent(applicationContext, LocationService::class.java).apply {
@@ -577,7 +564,7 @@ class MainActivity : ComponentActivity() {
                                 tempusers.add(
                                     user(
                                         userData.userId,
-                                        user_loc(
+                                        locat(
                                             userData.location.longitude,
                                             userData.location.latitude
                                         ),

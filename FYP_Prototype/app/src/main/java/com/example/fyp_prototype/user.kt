@@ -1,10 +1,5 @@
 package com.example.fyp_prototype
 
-import android.os.Parcel
-import android.os.Parcelable
-import com.google.firebase.Firebase
-import com.google.firebase.database.database
-
 // this is the User class
 // this class is the framework of how we store data in the database
 
@@ -12,7 +7,7 @@ import com.google.firebase.database.database
 
 data class user(
     val userId: String = "",
-    val location: user_loc = user_loc(),
+    val location: locat = locat(),
     var team: String = "None",
     var role: String = "Player",
     var status: String = "Nominal",
@@ -21,7 +16,7 @@ data class user(
 )
 
 
-data class user_loc(
+data class locat(
     var longitude: Double = 0.0,
     var latitude: Double = 0.0
 
