@@ -45,6 +45,7 @@ android {
 dependencies {
     val nav_version = "2.8.8"
     implementation(platform(libs.firebase.bom))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
     implementation(libs.firebase.database)
     implementation(libs.osmdroid)

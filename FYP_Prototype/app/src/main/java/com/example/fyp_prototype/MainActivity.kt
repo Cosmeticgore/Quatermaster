@@ -392,7 +392,7 @@ class MainActivity : ComponentActivity() {
                 }
             },
             update = { view ->
-                // Update logic if needed
+
             }
         )
     }
