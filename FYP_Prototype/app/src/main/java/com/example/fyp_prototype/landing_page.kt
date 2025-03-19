@@ -68,9 +68,7 @@ class landing_page : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         userdata = AppData.getInstance(application)
-        val sharedPref = getSharedPreferences(
-            "Quartermaster.StoredData", MODE_PRIVATE
-        )
+        userdata.reset_data()
         setContent { // UI
             App(userdata)
         }
@@ -97,7 +95,7 @@ class landing_page : ComponentActivity() {
                     type = NavType.StringType
                 })
             ) { backStackEntry ->
-                games_list(navController)
+                games_list(navController,userdata, true)
             }
             composable("game_designer") {
 
@@ -198,7 +196,6 @@ class landing_page : ComponentActivity() {
         Button(
             onClick = {
                 val id = Random.nextInt(100000, 999999).toString() //generates a session ID
-
                 val newUser = user( //creates a new user
                     userId = userdata.user_ID.value.toString(),
                     role = "Admin",

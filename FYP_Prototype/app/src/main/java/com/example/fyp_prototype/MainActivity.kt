@@ -83,6 +83,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -411,6 +413,17 @@ class MainActivity : ComponentActivity() {
             composable("players") {
                 PlayersListScreen(navController, Session_ID)
             }
+            composable("selectSite"){
+                site_view_screen(navController, userdata, false)
+            }
+            composable(
+                route = "games_list/{Site_ID}",
+                arguments = listOf(navArgument("Site_ID") {
+                    type = NavType.StringType
+                })
+            ) { backStackEntry ->
+                games_list(navController,userdata, false)
+            }
         }
 
     }
@@ -463,14 +476,20 @@ class MainActivity : ComponentActivity() {
                 )
 
                 Text(
-                    text = "Game Brief",
+                    text = "Current Site: ${userdata.Cur_Site.value?.name}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${userdata.Cur_Game.value?.name}",
                     style = MaterialTheme.typography.titleMedium
                 )
 
                 Divider()
 
                 Text(
-                    text = "Lorem Ipsum",
+                    text = "${userdata.Cur_Game.value?.desc}",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -506,6 +525,25 @@ class MainActivity : ComponentActivity() {
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
+                }
+
+                if (userdata.Role.value == "Admin"){
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = { navController.navigate("selectSite") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Gray.copy(alpha = 0.8f)
+                        )
+                    ) {
+                        Text(
+                            text = "Select Site/Game",
+                            color = Color.Black,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))

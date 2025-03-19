@@ -27,6 +27,8 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
     val Team = MutableLiveData<String>()
     val Status = MutableLiveData<String>()
     val Username = MutableLiveData<String>()
+    val Cur_Site= MutableLiveData<site?>()
+    val Cur_Game= MutableLiveData<game?>()
 
     fun updateAppData(UID: String, SID: String, role: String, team: String, status: String){
         user_ID.value = UID
@@ -34,6 +36,17 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         Role.value = role
         Team.value = team
         Status.value = status
+    }
+
+    fun reset_data(){
+        user_ID.value = ""
+        Session_ID.value = ""
+        Role.value = "Player"
+        Team.value =  "Not Set"
+        Status.value = "Nominal"
+        Username.value = ""
+        Cur_Site.value = null
+        Cur_Game.value = null
     }
 
     fun update_team(team: String) {

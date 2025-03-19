@@ -191,8 +191,15 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
             ) {
                 items(sites.value) { site ->
                     SiteListItem(site, onItemclick = { selectedSite ->
-
-                        navController.navigate("games_list/${selectedSite.Site_ID}")
+                        if (edit == true){
+                            navController.navigate("games_list/${selectedSite.Site_ID}")
+                        } else {
+                            userdata.Cur_Site.value = site
+                            navController.navigate("games_list/${selectedSite.Site_ID}"){
+                                popUpTo("info") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
                     })
                     Log.i("SitesList", "Displaying Site")
                     Divider()
@@ -266,12 +273,17 @@ private fun SiteListItem(site: site, onItemclick: (site) -> Unit) {
 }
 
 @Composable
-fun games_list(navController: NavController){
+fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     val games = remember { mutableStateOf<List<game>>(emptyList()) }
     val database = FirebaseDatabase.getInstance()
     var showDialog by remember { mutableStateOf(false) }
+    var STID: String? = null
 
-    val STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
+    if (edit == true){
+        STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
+    }else {
+        STID = userdata.Cur_Site.value?.Site_ID
+    }
 
     val databaseRef = database.getReference("sites").child(STID.toString()).child("Games")
 
@@ -328,7 +340,14 @@ fun games_list(navController: NavController){
                     .fillMaxWidth()
             ) {
                 items(games.value) { game ->
-                    GameListItem(game)
+                    GameListItem(game, onItemclick = { selectedGame ->
+                        if (edit == true){
+                        null
+                        } else {
+                            userdata.Cur_Game.value = game
+                            navController.navigateUp()
+                        }
+                    })
                     Log.i("GameList", "Displaying Site")
                     Divider()
                 }
@@ -350,29 +369,28 @@ fun games_list(navController: NavController){
                 )
             }
 
-
-            Button(
-                onClick = { showDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f),
-                )
-            ) {
-                Text(
-                    text = "New Game",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            if (edit == true){
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.8f),
+                    )
+                ) {
+                    Text(
+                        text = "New Game",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
         if (showDialog == true){
             TextinputDialog(
                 onInputSubmitted = {Input ->
                     val newgame = game(
-                        name = Input,
-                        desc = "Lorem Ipsum"
-
+                        name = Input
                     )
                     databaseRef.child(newgame.gid).setValue(newgame)
                     showDialog = false
@@ -383,11 +401,12 @@ fun games_list(navController: NavController){
     }
 }
 @Composable
-private fun GameListItem(game: game) {
+private fun GameListItem(game: game, onItemclick: (game) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
+            .clickable{onItemclick(game)}
     ) {
         Text(
             text = "Game: ${game.name}",
