@@ -6,6 +6,8 @@ package com.example.fyp_prototype
 
 data class session(
     val session_Id: String = "",
-    val users: Map<String, user> = emptyMap()
+    val users: Map<String, user> = emptyMap(),
+    var gid: String = "",
+    var stid: String = ""
 )
 

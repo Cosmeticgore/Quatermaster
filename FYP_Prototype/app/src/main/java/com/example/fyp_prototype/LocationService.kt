@@ -75,7 +75,6 @@ class LocationService: Service() {
                     val long = location.longitude.toString()
 
                     val curlocref = databaseRef.child(Session_ID).child("users").child(User_ID).child("location")
-
                     // map the location data
                     val locationData = mapOf(
                         "latitude" to lat.toDouble(),

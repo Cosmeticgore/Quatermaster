@@ -195,6 +195,8 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                             navController.navigate("games_list/${selectedSite.Site_ID}")
                         } else {
                             userdata.Cur_Site.value = site
+                            val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
+                            session_Ref.child("stid").setValue(site.Site_ID)
                             navController.navigate("games_list/${selectedSite.Site_ID}"){
                                 popUpTo("info") { inclusive = false }
                                 launchSingleTop = true
@@ -345,6 +347,8 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                         null
                         } else {
                             userdata.Cur_Game.value = game
+                            val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
+                            session_Ref.child("gid").setValue(game.gid)
                             navController.navigateUp()
                         }
                     })
