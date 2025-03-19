@@ -149,7 +149,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                                     tempsites.add(
                                         site(
                                             name = name,
-                                            Site_ID = siteId,
+                                            site_ID = siteId,
                                             users_IDs = userIDs as MutableList<String>
                                         )
                                     )
@@ -192,12 +192,12 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                 items(sites.value) { site ->
                     SiteListItem(site, onItemclick = { selectedSite ->
                         if (edit == true){
-                            navController.navigate("games_list/${selectedSite.Site_ID}")
+                            navController.navigate("games_list/${selectedSite.site_ID}")
                         } else {
                             userdata.Cur_Site.value = site
                             val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
-                            session_Ref.child("stid").setValue(site.Site_ID)
-                            navController.navigate("games_list/${selectedSite.Site_ID}"){
+                            session_Ref.child("stid").setValue(site.site_ID)
+                            navController.navigate("games_list/${selectedSite.site_ID}"){
                                 popUpTo("info") { inclusive = false }
                                 launchSingleTop = true
                             }
@@ -245,10 +245,10 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                 onInputSubmitted = {Input ->
                     val newSite = site(
                         name = Input,
-                        Site_ID = "site_${System.currentTimeMillis()}",
+                        site_ID = "site_${System.currentTimeMillis()}",
                         users_IDs = mutableListOf(userdata.user_ID.value.toString())
                     )
-                    databaseRef.child(newSite.Site_ID).setValue(newSite)
+                    databaseRef.child(newSite.site_ID).setValue(newSite)
                     showDialog = false
                 },
                 "Site Name"
@@ -284,7 +284,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     if (edit == true){
         STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
     }else {
-        STID = userdata.Cur_Site.value?.Site_ID
+        STID = userdata.Cur_Site.value?.site_ID
     }
 
     val databaseRef = database.getReference("sites").child(STID.toString()).child("Games")

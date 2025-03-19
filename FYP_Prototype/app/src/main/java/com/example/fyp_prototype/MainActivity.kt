@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.service.autofill.UserData
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -85,6 +86,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.google.firebase.database.ChildEventListener
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -431,6 +433,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun MapHome(User: user, Session_ID: String, navController: NavController) {
+        updateAppdate(userdata)
         Box(modifier = Modifier.fillMaxSize()) {
             OsmdroidMapView(User, Session_ID)
 
@@ -459,6 +462,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun InfoScreen(navController: NavController, Session_ID: String) {
+        updateAppdate(userdata)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -875,6 +879,45 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
+    }
+
+    private fun updateAppdate(userData: AppData){
+
+        val database = Firebase.database
+        val sessiondatabaseRef = database.getReference("sessions")
+        val sitesdatabaseRef = database.getReference("sites")
+        var GID = ""
+        var STID = ""
+
+        sessiondatabaseRef.child(userData.Session_ID.value.toString()).addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val session = snapshot.getValue(session::class.java)
+                GID = session?.gid ?: return
+                STID = session.stid
+
+                sitesdatabaseRef.child(STID).addListenerForSingleValueEvent(object : ValueEventListener{
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val site = snapshot.getValue(site::class.java)
+                        userData.Cur_Site.value = site
+                        val game = site?.Games?.get(GID)
+                        if (game != null) {
+                            userData.Cur_Game.value = game
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("FirebaseError", "Database query failed: ${error.message}")
+                    }
+                })
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("FirebaseError", "Database query failed: ${error.message}")
+            }
+        })
+
+
+
     }
 }
 
