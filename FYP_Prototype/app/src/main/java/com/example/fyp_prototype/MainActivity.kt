@@ -389,7 +389,7 @@ class MainActivity : ComponentActivity() {
                     minZoomLevel = 3.0
                     maxZoomLevel = 20.0
                     controller.setZoom(10.0)
-                    controller.setCenter(GeoPoint(48.8583, 2.2944))
+                    controller.setCenter(GeoPoint(User.location.longitude, User.location.latitude))
                     setBuiltInZoomControls(true)
                     setMultiTouchControls(true)
                     overlays.add(locationOverlay)
@@ -399,6 +399,8 @@ class MainActivity : ComponentActivity() {
 
             }
         )
+        userdata.Cur_Site.value?.drawMarkers(mapView)
+        userdata.Cur_Game.value?.drawMarkers(mapView)
     }
 
     @Composable

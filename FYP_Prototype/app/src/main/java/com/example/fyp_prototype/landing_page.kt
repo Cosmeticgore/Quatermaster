@@ -1,7 +1,9 @@
 package com.example.fyp_prototype
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -39,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -56,6 +59,11 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.serialization.json.Json
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 import kotlin.random.Random
 
@@ -307,6 +315,21 @@ class landing_page : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    private fun MarkerPlacer(){
+        val context = LocalContext.current
+        var mapView = remember { MapView(context) }
+        var selectedPoint: GeoPoint? = null
+        var tempObject: MapObject
+        var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
+
+        LaunchedEffect(Unit) {
+            Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
+            Configuration.getInstance().userAgentValue = "AirsoftAPP"
+        }
+    }
+
 }
 
 
