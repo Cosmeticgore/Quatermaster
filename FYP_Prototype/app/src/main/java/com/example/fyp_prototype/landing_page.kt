@@ -65,7 +65,7 @@ class landing_page : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         userdata = AppData.getInstance(application)
-        userdata.reset_data()
+
         setContent { // UI
             App(userdata)
         }
@@ -95,7 +95,7 @@ class landing_page : ComponentActivity() {
                 games_list(navController,userdata, true)
             }
             composable("games_designer"){
-                MarkerPlacer(navController, userdata)
+                Editor(navController, userdata)
             }
         }
 
@@ -241,6 +241,7 @@ class landing_page : ComponentActivity() {
 
     @Composable
     private fun join_create(userdata: AppData, navController: NavController) {
+        userdata.reset_data()
         val context = LocalContext.current
         val sharedPref =
             context.getSharedPreferences("Quatermaster.storedData", MODE_PRIVATE)
@@ -306,14 +307,16 @@ class landing_page : ComponentActivity() {
     }
 
     @Composable
-    private fun MarkerPlacer(navController: NavController, userdata: AppData){
+    private fun Editor(navController: NavController, userdata: AppData){
         val context = LocalContext.current
         val database = FirebaseDatabase.getInstance()
         var mapView = remember { MapView(context) }
-        var selectedPoint: MapObject.GeoPointData? = null
+        var selectedPoint: GeoPointData? = null
         var tempObject: MapObject
         var Markers: MutableList<MapObject> = userdata.Cur_Game.value?.markers ?: return
         var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
+        var showBrief by remember { mutableStateOf(false) }
+
 
         LaunchedEffect(Unit) {
             Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
@@ -389,6 +392,33 @@ class landing_page : ComponentActivity() {
                     }
                 ) {
                     Text("Add Marker")
+                }
+
+                Button(
+                    onClick = {
+                        showBrief = true
+                    }
+                ) {
+                    Text("Edit Brief")
+                }
+                if (showBrief == true) {
+                    twotextinputDialog(
+                        userdata.Cur_Game.value?.name ?: return, userdata.Cur_Game.value?.desc ?: return,
+                        onDismiss = { showBrief = false},
+                        onConfirm = { title, desc ->
+                            val Ref = database.getReference("sites")
+                            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
+                                .child(userdata.Cur_Game.value?.gid.toString()).child("name").setValue(title).addOnSuccessListener{
+                                    userdata.Cur_Game.value?.name = title
+                                }
+                            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
+                                .child(userdata.Cur_Game.value?.gid.toString()).child("desc").setValue(desc).addOnSuccessListener{
+                                    userdata.Cur_Game.value?.desc = desc
+                                }
+                            showBrief = false
+
+                        }
+                    )
                 }
 
 

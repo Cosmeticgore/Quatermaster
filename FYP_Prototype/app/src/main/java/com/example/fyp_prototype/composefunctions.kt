@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -420,4 +422,48 @@ private fun GameListItem(game: game, onItemclick: (game) -> Unit) {
             fontWeight = FontWeight.SemiBold
         )
     }
+}
+
+@Composable
+fun twotextinputDialog(
+    title: String,
+    desc: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+){
+    var titlein by remember { mutableStateOf("") }
+    var descriptionin by remember { mutableStateOf("") }
+
+    titlein = title
+    descriptionin = desc
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter Details") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = titlein,
+                    onValueChange = { titlein = it },
+                    label = { Text("Title") }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = descriptionin,
+                    onValueChange = { descriptionin = it },
+                    label = { Text("Description") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(titlein, descriptionin) }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
