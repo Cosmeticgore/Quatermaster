@@ -192,6 +192,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                 items(sites.value) { site ->
                     SiteListItem(site, onItemclick = { selectedSite ->
                         if (edit == true){
+                            userdata.Cur_Site.value = site
                             navController.navigate("games_list/${selectedSite.site_ID}")
                         } else {
                             userdata.Cur_Site.value = site
@@ -287,7 +288,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
         STID = userdata.Cur_Site.value?.site_ID
     }
 
-    val databaseRef = database.getReference("sites").child(STID.toString()).child("Games")
+    val databaseRef = database.getReference("sites").child(STID.toString()).child("games")
 
     LaunchedEffect(Unit) {
         val tempgames = mutableListOf<game>()
@@ -344,7 +345,8 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                 items(games.value) { game ->
                     GameListItem(game, onItemclick = { selectedGame ->
                         if (edit == true){
-                        null
+                            userdata.Cur_Game.value = game
+                            navController.navigate("games_designer")
                         } else {
                             userdata.Cur_Game.value = game
                             val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())

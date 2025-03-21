@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.service.autofill.UserData
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -86,7 +85,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.google.firebase.database.ChildEventListener
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -152,7 +150,7 @@ class MainActivity : ComponentActivity() {
     //FUNCTIONS
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private fun requestPermissions() { // put needed permissions here
+    fun requestPermissions() { // put needed permissions here
         val permissions = arrayOf(
             Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -901,7 +899,7 @@ class MainActivity : ComponentActivity() {
                     override fun onDataChange(snapshot: DataSnapshot) {
                         val site = snapshot.getValue(site::class.java)
                         userData.Cur_Site.value = site
-                        val game = site?.Games?.get(GID)
+                        val game = site?.games?.get(GID)
                         if (game != null) {
                             userData.Cur_Game.value = game
                         }

@@ -7,12 +7,13 @@ data class game (
     var gid: String = "game_${System.currentTimeMillis()}",
     var name: String = "",
     var desc: String = "MY LIFE IS LIKE A VIDEO GAME TRYING TO BEAT THE STAGE ALL THE WHILE IM STILL COLLECTING COINS",
-    var Markers: MutableList<MapObject> = mutableListOf<MapObject>()
+    var markers: MutableList<MapObject> = mutableListOf<MapObject>()
 ){
     fun drawMarkers(map: MapView){
-        Markers.forEach{ marker ->
+        markers.forEach{ marker ->
             marker.draw(map)
         }
+        map.invalidate()
     }
 }
 
