@@ -11,7 +11,7 @@ data class game (
 ){
     fun drawMarkers(map: MapView){
         markers.forEach{ marker ->
-            marker.draw(map)
+            marker.draw(map, true)
         }
         map.invalidate()
     }

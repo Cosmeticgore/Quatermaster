@@ -54,6 +54,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import kotlin.math.log
 
 import kotlin.random.Random
 
@@ -316,6 +317,8 @@ class landing_page : ComponentActivity() {
         var Markers: MutableList<MapObject> = userdata.Cur_Game.value?.markers ?: return
         var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
         var showBrief by remember { mutableStateOf(false) }
+        var showMarkerEdit by remember { mutableStateOf(false) }
+        var markersVersion by remember { mutableStateOf(0) }
 
 
         LaunchedEffect(Unit) {
@@ -329,13 +332,12 @@ class landing_page : ComponentActivity() {
 
         Box(modifier = Modifier.fillMaxSize()){
             AndroidView(
-                factory = {mapView},
+                factory = { mapView },
                 modifier = Modifier.fillMaxSize(),
-                update = {
-                    mapView ->
+                update = { mapView ->
                     mapView.overlays.clear()
-                    Markers.forEach{ marker ->
-                        marker.draw(mapView)
+                    Markers.forEach { marker ->
+                        marker.draw(mapView, true)
                     }
                     mapView.invalidate()
                 }
@@ -361,7 +363,8 @@ class landing_page : ComponentActivity() {
                         val Ref = database.getReference("sites")
 
                         Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                            .child(userdata.Cur_Game.value?.gid.toString()).child("markers").setValue(Markers)
+                            .child(userdata.Cur_Game.value?.gid.toString()).child("markers")
+                            .setValue(Markers)
                         navController.navigateUp()
                     }
                 ) {
@@ -370,25 +373,7 @@ class landing_page : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        val centerIGeoPoint = mapView.mapCenter
-                        if (centerIGeoPoint != null) {
-                            val centerPoint =
-                                GeoPointData(centerIGeoPoint.latitude, centerIGeoPoint.longitude)
-                            selectedPoint = centerPoint
-                            val tempList: MutableList<GeoPointData> = ArrayList()
-                            tempList.add(selectedPoint)
-                            Markers.add(
-                                MapObject(
-                                    type = 0,
-                                    title = "marker",
-                                    desc = "Lorem Ipsum",
-                                    geopoints = tempList
-                                )
-                            )
-                            Markers.forEach { marker ->
-                                marker.draw(mapView)
-                            }
-                        }
+                        showMarkerEdit = true
                     }
                 ) {
                     Text("Add Marker")
@@ -403,16 +388,19 @@ class landing_page : ComponentActivity() {
                 }
                 if (showBrief == true) {
                     twotextinputDialog(
-                        userdata.Cur_Game.value?.name ?: return, userdata.Cur_Game.value?.desc ?: return,
-                        onDismiss = { showBrief = false},
+                        userdata.Cur_Game.value?.name ?: return,
+                        userdata.Cur_Game.value?.desc ?: return,
+                        onDismiss = { showBrief = false },
                         onConfirm = { title, desc ->
                             val Ref = database.getReference("sites")
                             Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                                .child(userdata.Cur_Game.value?.gid.toString()).child("name").setValue(title).addOnSuccessListener{
+                                .child(userdata.Cur_Game.value?.gid.toString()).child("name")
+                                .setValue(title).addOnSuccessListener {
                                     userdata.Cur_Game.value?.name = title
                                 }
                             Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                                .child(userdata.Cur_Game.value?.gid.toString()).child("desc").setValue(desc).addOnSuccessListener{
+                                .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
+                                .setValue(desc).addOnSuccessListener {
                                     userdata.Cur_Game.value?.desc = desc
                                 }
                             showBrief = false
@@ -421,14 +409,41 @@ class landing_page : ComponentActivity() {
                     )
                 }
 
+                if (showMarkerEdit == true) {
+                    EditorDialog(
+                        onDismiss = { showMarkerEdit = false },
+                        onConfirm = { title, desc, team, markerType ->
+                            val centerIGeoPoint = mapView.mapCenter
+                            if (centerIGeoPoint != null) {
+                                val centerPoint =
+                                    GeoPointData(centerIGeoPoint.latitude, centerIGeoPoint.longitude)
+                                selectedPoint = centerPoint
+                                showMarkerEdit = true
+                            }
+                            selectedPoint?.let { point ->
+                                Log.i("Marker maker", "Confirm clicked in Editor")
+                                val tempList: MutableList<GeoPointData> = ArrayList()
+                                tempList.add(point)
+                                Log.i("Marker maker","Adding Marker $title at $point")
+                                Markers.add(
+                                    MapObject(
+                                        type = 0,
+                                        title = title,
+                                        desc = desc,
+                                        geopoints = tempList,
+                                        team = team,
+                                        icon = markerType
+                                    )
+                                )
 
+                                markersVersion++
+                            }?: Log.e("Marker maker", "selectedPoint is null")
+                            showMarkerEdit = false
+                        })
+                }
             }
-
-
-
         }
     }
-
 }
 
 

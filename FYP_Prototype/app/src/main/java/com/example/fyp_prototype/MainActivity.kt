@@ -915,9 +915,6 @@ class MainActivity : ComponentActivity() {
                 Log.e("FirebaseError", "Database query failed: ${error.message}")
             }
         })
-
-
-
     }
 }
 

@@ -8,11 +8,12 @@ data class site (
     var users_IDs: MutableList<String> = mutableListOf<String>(),
     var games: Map<String, game> = mapOf(),
     var brief: String = "",
-    var Markers: MutableList<MapObject> = mutableListOf<MapObject>()
+    var Markers: MutableList<MapObject> = mutableListOf<MapObject>(),
+    var Red: Boolean = true
 ){
     fun drawMarkers(map: MapView){
         Markers.forEach{ marker ->
-            marker.draw(map)
+            marker.draw(map, Red)
         }
         map.invalidate()
     }

@@ -15,10 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -463,6 +469,134 @@ fun twotextinputDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun EditorDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, String) -> Unit
+){
+    var title by remember { mutableStateOf("") }
+    var desc by remember { mutableStateOf("") }
+
+    val teamOptions = listOf("Team 1", "Team 2", "None")
+    val markerOptions = listOf("Respawn", "Flag", "X", "Warning")
+
+    var firstDropdownExpanded by remember { mutableStateOf(false) }
+    var secondDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedteamOption by remember { mutableStateOf(teamOptions[0]) }
+    var selectedmarkerOption by remember { mutableStateOf(markerOptions[0]) }
+
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Marker Settings")},
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ){
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = {title = it},
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = {desc = it},
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Column {
+                    Text("Select Team:")
+                    Box {
+                        OutlinedTextField(
+                            value = selectedteamOption,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { firstDropdownExpanded = true }) {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowDropDown,
+                                        contentDescription = "Dropdown"
+                                    )
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = firstDropdownExpanded,
+                            onDismissRequest = { firstDropdownExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            teamOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        selectedteamOption = option
+                                        firstDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Column {
+                    Text("Select Icon")
+                    Box {
+                        OutlinedTextField(
+                            value = selectedmarkerOption,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { secondDropdownExpanded = true }) {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowDropDown,
+                                        contentDescription = "Dropdown"
+                                    )
+                                }
+                            }
+                        )
+
+                        DropdownMenu(
+                            expanded = secondDropdownExpanded,
+                            onDismissRequest = { secondDropdownExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            markerOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        selectedmarkerOption = option
+                                        secondDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    Log.d("EditorDialog", "Confirm clicked: title=$title, desc=$desc, team=$selectedteamOption, marker=$selectedmarkerOption")
+                    onConfirm(title, desc, selectedteamOption, selectedmarkerOption)
+                    onDismiss()
+                }
+            ) {
+                Text("Confirm")
             }
         }
     )

@@ -2,6 +2,7 @@ package com.example.fyp_prototype
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import androidx.core.content.ContextCompat
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -14,8 +15,9 @@ class MapObject {
     var desc: String = ""
     var colour: Int = Color.GRAY
     var width: Float = 1F
-    var icon: Drawable? = null
+    var icon: String = "Flag"
     var geopoints: MutableList<GeoPointData> = mutableListOf()
+    var team: String = "None"
 
     constructor()
 
@@ -25,8 +27,10 @@ class MapObject {
         desc: String = "",
         colour: Int = Color.GRAY,
         width: Float = 1F,
-        icon: Drawable? = null,
-        geopoints: MutableList<GeoPointData>
+        icon: String = "Flag",
+        geopoints: MutableList<GeoPointData>,
+        team: String = "None"
+
     ) {
         this.type = type
         this.title = title
@@ -35,10 +39,11 @@ class MapObject {
         this.width = width
         this.icon = icon
         this.geopoints = geopoints
+        this.team = team
     }
 
 
-    fun draw(map: MapView){
+    fun draw(map: MapView, red: Boolean){ //red false means team 1 is blue, true means team 1 is red
 
         val geoPointsList = geopoints.map { GeoPoint(it.latitude, it.longitude) }
 
@@ -51,8 +56,32 @@ class MapObject {
             marker.title = title
             marker.snippet = desc
 
-            if (icon != null) {
-                marker.icon = icon
+            val teamColor = when (team) {
+                "Team 1" -> if (red) "red" else "blue"
+                "Team 2" -> if (red) "blue" else "red"
+                else -> "None"
+            }
+
+            if (icon == "Respawn"){
+                if (teamColor == "red"){
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redrespawn)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.bluerespwawn)
+                }
+            }else if (icon == "Flag"){
+                if (teamColor == "red"){
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redflag)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.blueflag)
+                }
+            }else if (icon == "Warning"){
+                marker.icon = ContextCompat.getDrawable(map.context,R.drawable.emergency)
+            }else{
+                if (teamColor == "red"){
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redx)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.bluex)
+                }
             }
 
             map.overlays.add(marker)
@@ -79,8 +108,4 @@ class MapObject {
         val latitude: Double = 0.0,
         val longitude: Double = 0.0
     )
-
-    fun convertToOsmdroidGeoPoints(): List<GeoPoint> {
-        return geopoints.map { GeoPoint(it.latitude, it.longitude) }
-    }
 }
