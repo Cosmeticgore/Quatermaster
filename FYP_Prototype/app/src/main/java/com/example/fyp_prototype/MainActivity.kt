@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,9 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -83,6 +87,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
@@ -343,7 +348,6 @@ class MainActivity : ComponentActivity() {
 
     //COMPOSABLE FUNCTIONS
 
-
     @Composable
     fun OsmdroidMapView(User: user, S_ID: String) { // view that displays map
         val context = LocalContext.current
@@ -386,8 +390,8 @@ class MainActivity : ComponentActivity() {
                     setTileSource(TileSourceFactory.MAPNIK)
                     minZoomLevel = 3.0
                     maxZoomLevel = 20.0
-                    controller.setZoom(10.0)
-                    controller.setCenter(GeoPoint(User.location.longitude, User.location.latitude))
+                    controller.setZoom(18.0)
+                    controller.setCenter(GeoPoint(53.50702691035493, -6.20570831325354))
                     setBuiltInZoomControls(true)
                     setMultiTouchControls(true)
                     overlays.add(locationOverlay)
@@ -400,6 +404,80 @@ class MainActivity : ComponentActivity() {
         userdata.Cur_Site.value?.drawMarkers(mapView)
         userdata.Cur_Game.value?.drawMarkers(mapView)
     }
+
+/*
+    @Composable
+    fun OsmdroidMapView(User: user, S_ID: String) { // view that displays map
+        val context = LocalContext.current
+        val locationProvider = GpsMyLocationProvider(context)
+        val mapView = remember { MapView(context) }
+        val hasSetInitialLocation = remember { mutableStateOf(false) }
+
+
+        val locationOverlay = remember { // needed for location to work
+            MyLocationNewOverlay(locationProvider, mapView).apply {
+                enableMyLocation()
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            locationProvider.startLocationProvider { location, source ->
+                if (location != null && !hasSetInitialLocation.value) {
+                    User.location.latitude = location.latitude
+                    User.location.longitude = location.longitude
+                    mapView.controller.setCenter(GeoPoint(location.latitude, location.longitude))
+                    hasSetInitialLocation.value = true
+
+                    updateLocations(mapView, User, S_ID)
+                }
+            }
+        }
+
+        DisposableEffect(Unit) {
+            val job = scope.launch { // co routine to have these tasks run with the rest of the app
+                while (isActive) { //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
+                    if (locationProvider.lastKnownLocation != null) {
+                        User.location.latitude = locationProvider.lastKnownLocation.latitude
+                        User.location.longitude = locationProvider.lastKnownLocation.longitude
+                        updateLocations(
+                            mapView,
+                            User,
+                            S_ID
+                        ) // gets the other users location from the database and updates them and marks them
+                    }
+                    delay(10000) // delay of 15 seconds between updates
+                }
+            }
+
+            onDispose { //cleanup
+                job.cancel()
+                locationOverlay.disableMyLocation()
+                userMarkers.clear()
+            }
+        }
+
+        AndroidView( // this is the map
+            modifier = Modifier.fillMaxSize(),//sets the view to cover the entire screen
+            factory = {
+                mapView.apply {
+                    setTileSource(TileSourceFactory.MAPNIK)
+                    minZoomLevel = 3.0
+                    maxZoomLevel = 20.0
+                    controller.setZoom(18.0)
+                    setBuiltInZoomControls(true)
+                    setMultiTouchControls(true)
+                    overlays.add(locationOverlay)
+                }
+            },
+            update = { view ->
+
+            }
+        )
+        userdata.Cur_Site.value?.drawMarkers(mapView)
+        userdata.Cur_Game.value?.drawMarkers(mapView)
+    }
+
+ */
 
     @Composable
     private fun App(User: user, Session_ID: String) {
@@ -492,12 +570,45 @@ class MainActivity : ComponentActivity() {
 
                 Divider()
 
-                Text(
-                    text = "${userdata.Cur_Game.value?.desc}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(3f)
+                        .fillMaxWidth()
+                        .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    val scrollState = rememberScrollState()
+                    Column {
+                        Text(
+                            text = "${userdata.Cur_Game.value?.desc}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .verticalScroll(scrollState)
+                                .fillMaxWidth()
+                        )
+                    }
 
-                Spacer(modifier = Modifier.weight(1f))
+
+                    if (scrollState.canScrollForward) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .height(24.dp)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background.copy(alpha = 0.7f)),
+                                        startY = 0f,
+                                        endY = 24f
+                                    )
+                                )
+                        )
+                    }
+                }
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
 
                 Button(
                     onClick = { navController.navigate("players") },
@@ -585,7 +696,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
+    }}
 
     @Composable
     private fun PlayersListScreen(navController: NavController, SID: String) {
