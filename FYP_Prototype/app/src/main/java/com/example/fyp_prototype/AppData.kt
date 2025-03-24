@@ -71,6 +71,10 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         Role.value = role
     }
 
-
-
+    fun update_username(username: String) {
+        val database = Firebase.database
+        val databaseRef = database.getReference("sessions")
+        databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("username").setValue(username)
+        Username.value = username
+    }
 }

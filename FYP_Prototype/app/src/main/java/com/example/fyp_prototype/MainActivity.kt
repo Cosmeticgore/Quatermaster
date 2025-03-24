@@ -1,18 +1,14 @@
 package com.example.fyp_prototype
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -81,6 +76,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +86,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import org.osmdroid.views.overlay.compass.CompassOverlay
+import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
 import androidx.compose.material3.AlertDialog as ComposeAlertDialog
 
 
@@ -106,8 +104,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Request necessary permissions for locations etc
-        requestPermissions()
+
         // Initialize OSMDroid configuration *important so i dont get banned of OSM*
         val ctx = applicationContext
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
@@ -153,32 +150,6 @@ class MainActivity : ComponentActivity() {
     }
 
     //FUNCTIONS
-
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    fun requestPermissions() { // put needed permissions here
-        val permissions = arrayOf(
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.POST_NOTIFICATIONS,
-            Manifest.permission.FOREGROUND_SERVICE,
-            Manifest.permission.FOREGROUND_SERVICE_LOCATION
-        )
-
-        for (permission in permissions) { // check to see if they are granted
-            if (ContextCompat.checkSelfPermission(this, permission)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    permissions,
-                    REQUEST_PERMISSIONS_REQUEST_CODE
-                )
-                break
-            }
-        }
-    }
 
     // gets all the users in the database and marks them on the map
     private fun updateLocations(mapView: MapView, user: user, S_ID: String) {
@@ -353,10 +324,17 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val locationProvider = GpsMyLocationProvider(context)
         val mapView = remember { MapView(context) }
+        val initialLocationSet = remember { mutableStateOf(false) }
 
         val locationOverlay = remember { // needed for location to work
             MyLocationNewOverlay(locationProvider, mapView).apply {
                 enableMyLocation()
+            }
+        }
+
+        val compassOverlay = remember {
+            CompassOverlay(context, InternalCompassOrientationProvider(context), mapView).apply {
+                enableCompass()
             }
         }
 
@@ -366,19 +344,32 @@ class MainActivity : ComponentActivity() {
                     if (locationProvider.lastKnownLocation != null) {
                         User.location.latitude = locationProvider.lastKnownLocation.latitude
                         User.location.longitude = locationProvider.lastKnownLocation.longitude
+
+                        if (!initialLocationSet.value) {
+                            mapView.controller.setCenter(
+                                GeoPoint(User.location.latitude, User.location.longitude)
+                            )
+                            initialLocationSet.value = true
+                        }
+
                         updateLocations(
                             mapView,
                             User,
                             S_ID
                         ) // gets the other users location from the database and updates them and marks them
                     }
-                    delay(15000) // delay of 15 seconds between updates
+                    if (!initialLocationSet.value) {
+                        delay(1000)
+                    }else{
+                        delay(15000) // delay of 15 seconds between updates
+                    }
                 }
             }
 
             onDispose { //cleanup
                 job.cancel()
                 locationOverlay.disableMyLocation()
+                compassOverlay.disableCompass()
                 userMarkers.clear()
             }
         }
@@ -388,96 +379,21 @@ class MainActivity : ComponentActivity() {
             factory = {
                 mapView.apply {
                     setTileSource(TileSourceFactory.MAPNIK)
-                    minZoomLevel = 3.0
-                    maxZoomLevel = 20.0
-                    controller.setZoom(18.0)
-                    controller.setCenter(GeoPoint(53.50702691035493, -6.20570831325354))
-                    setBuiltInZoomControls(true)
-                    setMultiTouchControls(true)
-                    overlays.add(locationOverlay)
-                }
-            },
-            update = { view ->
-
-            }
-        )
-        userdata.Cur_Site.value?.drawMarkers(mapView)
-        userdata.Cur_Game.value?.drawMarkers(mapView)
-    }
-
-/*
-    @Composable
-    fun OsmdroidMapView(User: user, S_ID: String) { // view that displays map
-        val context = LocalContext.current
-        val locationProvider = GpsMyLocationProvider(context)
-        val mapView = remember { MapView(context) }
-        val hasSetInitialLocation = remember { mutableStateOf(false) }
-
-
-        val locationOverlay = remember { // needed for location to work
-            MyLocationNewOverlay(locationProvider, mapView).apply {
-                enableMyLocation()
-            }
-        }
-
-        LaunchedEffect(Unit) {
-            locationProvider.startLocationProvider { location, source ->
-                if (location != null && !hasSetInitialLocation.value) {
-                    User.location.latitude = location.latitude
-                    User.location.longitude = location.longitude
-                    mapView.controller.setCenter(GeoPoint(location.latitude, location.longitude))
-                    hasSetInitialLocation.value = true
-
-                    updateLocations(mapView, User, S_ID)
-                }
-            }
-        }
-
-        DisposableEffect(Unit) {
-            val job = scope.launch { // co routine to have these tasks run with the rest of the app
-                while (isActive) { //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
-                    if (locationProvider.lastKnownLocation != null) {
-                        User.location.latitude = locationProvider.lastKnownLocation.latitude
-                        User.location.longitude = locationProvider.lastKnownLocation.longitude
-                        updateLocations(
-                            mapView,
-                            User,
-                            S_ID
-                        ) // gets the other users location from the database and updates them and marks them
-                    }
-                    delay(10000) // delay of 15 seconds between updates
-                }
-            }
-
-            onDispose { //cleanup
-                job.cancel()
-                locationOverlay.disableMyLocation()
-                userMarkers.clear()
-            }
-        }
-
-        AndroidView( // this is the map
-            modifier = Modifier.fillMaxSize(),//sets the view to cover the entire screen
-            factory = {
-                mapView.apply {
-                    setTileSource(TileSourceFactory.MAPNIK)
-                    minZoomLevel = 3.0
+                    minZoomLevel = 17.0
                     maxZoomLevel = 20.0
                     controller.setZoom(18.0)
                     setBuiltInZoomControls(true)
                     setMultiTouchControls(true)
                     overlays.add(locationOverlay)
+                    overlays.add(compassOverlay)
                 }
             },
             update = { view ->
-
+                userdata.Cur_Site.value?.drawMarkers(mapView)
+                userdata.Cur_Game.value?.drawMarkers(mapView)
             }
         )
-        userdata.Cur_Site.value?.drawMarkers(mapView)
-        userdata.Cur_Game.value?.drawMarkers(mapView)
     }
-
- */
 
     @Composable
     private fun App(User: user, Session_ID: String) {
@@ -512,28 +428,22 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MapHome(User: user, Session_ID: String, navController: NavController) {
         updateAppdate(userdata)
-        Box(modifier = Modifier.fillMaxSize()) {
-            OsmdroidMapView(User, Session_ID)
-
-            Row(
+        Scaffold(
+            topBar = {
+                gametopbar(
+                    Button1Click = { navController.navigate("info") },
+                    Button2Click = { /* Handle map button click if needed */ },
+                    onOptionsClick = { /* Handle options click */ },
+                    Tab = "Map"
+                )
+            }
+        ) { paddingValues ->
+            Box(
                 modifier = Modifier
-                    .padding(16.dp)
-                    .align(Alignment.BottomStart)
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
-                Button(
-                    onClick = { navController.navigate("info") },
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray.copy(alpha = 0.8f)
-                    )
-                ) {
-                    Text(
-                        text = "Info",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                OsmdroidMapView(User, Session_ID)
             }
         }
     }
@@ -545,157 +455,178 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = "Session ID: $Session_ID",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                gametopbar(
+                    Button1Click = {},
+                    Button2Click = { navController.navigate("map") },
+                    onOptionsClick = {},
+                    Tab = "Info"
                 )
-
-                Text(
-                    text = "Current Site: ${userdata.Cur_Site.value?.name}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "${userdata.Cur_Game.value?.name}",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Divider()
 
                 Box(
                     modifier = Modifier
-                        .weight(3f)
-                        .fillMaxWidth()
-                        .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
-                        .padding(8.dp)
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
-                    val scrollState = rememberScrollState()
-                    Column {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+
                         Text(
-                            text = "${userdata.Cur_Game.value?.desc}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier
-                                .verticalScroll(scrollState)
-                                .fillMaxWidth()
+                            text = "Session ID: $Session_ID",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
                         )
-                    }
 
+                        Text(
+                            text = "Current Site: ${userdata.Cur_Site.value?.name}",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                    if (scrollState.canScrollForward) {
+                        Text(
+                            text = "${userdata.Cur_Game.value?.name}",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        Divider()
+
                         Box(
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
+                                .weight(3f)
                                 .fillMaxWidth()
-                                .height(24.dp)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(Color.Transparent, MaterialTheme.colorScheme.background.copy(alpha = 0.7f)),
-                                        startY = 0f,
-                                        endY = 24f
-                                    )
+                                .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
+                                .padding(8.dp)
+                        ) {
+                            val scrollState = rememberScrollState()
+                            Column {
+                                Text(
+                                    text = "${userdata.Cur_Game.value?.desc}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .verticalScroll(scrollState)
+                                        .fillMaxWidth()
                                 )
-                        )
+                            }
+
+
+                            if (scrollState.canScrollForward) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .fillMaxWidth()
+                                        .height(24.dp)
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    MaterialTheme.colorScheme.background.copy(alpha = 0.7f)
+                                                ),
+                                                startY = 0f,
+                                                endY = 24f
+                                            )
+                                        )
+                                )
+                            }
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+
+                            Button(
+                                onClick = { navController.navigate("players") },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray.copy(alpha = 0.8f)
+                                )
+                            ) {
+                                Text(
+                                    text = "View Players",
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { navController.navigateUp() },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray.copy(alpha = 0.8f)
+                                )
+                            ) {
+                                Text(
+                                    text = "Back to Map",
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            if (userdata.Role.value == "Admin") {
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Button(
+                                    onClick = { navController.navigate("selectSite") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.Gray.copy(alpha = 0.8f)
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Select Site/Game",
+                                        color = Color.Black,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { ping(Session_ID) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray.copy(alpha = 0.8f)
+                                )
+                            ) {
+                                Text(
+                                    text = "Request Help",
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = { urgentping(Session_ID) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Red.copy(alpha = 0.8f)
+                                )
+                            ) {
+                                Text(
+                                    text = "EMERGENCY",
+                                    color = Color.Black,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
-                }
-
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-
-                Button(
-                    onClick = { navController.navigate("players") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray.copy(alpha = 0.8f)
-                    )
-                ) {
-                    Text(
-                        text = "View Players",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { navController.navigateUp() },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray.copy(alpha = 0.8f)
-                    )
-                ) {
-                    Text(
-                        text = "Back to Map",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                if (userdata.Role.value == "Admin"){
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = { navController.navigate("selectSite") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Gray.copy(alpha = 0.8f)
-                        )
-                    ) {
-                        Text(
-                            text = "Select Site/Game",
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { ping(Session_ID) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray.copy(alpha = 0.8f)
-                    )
-                ) {
-                    Text(
-                        text = "Request Help",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Button(
-                    onClick = { urgentping(Session_ID) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red.copy(alpha = 0.8f)
-                    )
-                ) {
-                    Text(
-                        text = "EMERGENCY",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
-        }
     }}
 
     @Composable

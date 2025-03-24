@@ -1,5 +1,6 @@
 package com.example.fyp_prototype
 
+import android.R
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,10 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -30,12 +39,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.fyp_prototype.ui.theme.PurpleGrey40
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -134,7 +147,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
     val databaseRef = database.getReference("sites")
     var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    fun fetchsitelist(){
         val tempsites = mutableListOf<site>()
         databaseRef
             .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -177,25 +190,32 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                 }
             })
     }
+
+    LaunchedEffect(Unit) {
+        fetchsitelist()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "Sites",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            if(edit == true){
+                topbarwithtext("Sites", onBackClick = {navController.navigateUp()}, onAddClick = {
+                    showDialog = true
+                })
+            }else{
+                topbarwithtext("Sites: Select Site", onBackClick = {navController.navigateUp()})
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .padding(16.dp)
             ) {
                 items(sites.value) { site ->
                     SiteListItem(site, onItemclick = { selectedSite ->
@@ -215,38 +235,6 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                     Log.i("SitesList", "Displaying Site")
                     Divider()
                 }
-
-            }
-
-            Button(
-                onClick = { navController.navigateUp() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f),
-                )
-            ) {
-                Text(
-                    text = "Back",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-
-            Button(
-                onClick = { showDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f),
-                )
-            ) {
-                Text(
-                    text = "New Site",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
         if (showDialog == true){
@@ -258,6 +246,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                         users_IDs = mutableListOf(userdata.user_ID.value.toString())
                     )
                     databaseRef.child(newSite.site_ID).setValue(newSite)
+                    fetchsitelist()
                     showDialog = false
                 },
                 "Site Name"
@@ -298,7 +287,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
 
     val databaseRef = database.getReference("sites").child(STID.toString()).child("games")
 
-    LaunchedEffect(Unit) {
+    fun fetchgamelist(){
         val tempgames = mutableListOf<game>()
         databaseRef
             .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -330,25 +319,30 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                 }
             })
     }
+
+    LaunchedEffect(Unit) {
+        fetchgamelist()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "Games",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            if(edit == true){
+                topbarwithtext("Games", onBackClick = {navController.navigateUp()}, onAddClick = {
+                    showDialog = true
+                })
+            }else{
+                topbarwithtext("Games: Select game to load", onBackClick = {navController.navigateUp()})
+            }
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .padding(16.dp)
             ) {
                 items(games.value) { game ->
                     GameListItem(game, onItemclick = { selectedGame ->
@@ -365,39 +359,6 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                     Log.i("GameList", "Displaying Site")
                     Divider()
                 }
-
-            }
-
-            Button(
-                onClick = { navController.navigateUp() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f),
-                )
-            ) {
-                Text(
-                    text = "Back",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            if (edit == true){
-                Button(
-                    onClick = { showDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.8f),
-                    )
-                ) {
-                    Text(
-                        text = "New Game",
-                        color = Color.Black,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
             }
         }
         if (showDialog == true){
@@ -406,7 +367,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                     val newgame = game(
                         name = Input
                     )
-                    databaseRef.child(newgame.gid).setValue(newgame)
+                    databaseRef.child(newgame.gid).setValue(newgame).addOnSuccessListener{fetchgamelist()}
                     showDialog = false
                 },
                 "Game Name"
@@ -478,7 +439,7 @@ fun twotextinputDialog(
 @Composable
 fun EditorDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String) -> Unit
+    onConfirm: (String, String, String, String) -> Unit,
 ){
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
@@ -527,7 +488,7 @@ fun EditorDialog(
                             trailingIcon = {
                                 IconButton(onClick = { firstDropdownExpanded = true }) {
                                     Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowDropDown,
+                                        imageVector = Icons.Filled.ArrowDropDown,
                                         contentDescription = "Dropdown"
                                     )
                                 }
@@ -562,7 +523,7 @@ fun EditorDialog(
                             trailingIcon = {
                                 IconButton(onClick = { secondDropdownExpanded = true }) {
                                     Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowDropDown,
+                                        imageVector = Icons.Filled.ArrowDropDown,
                                         contentDescription = "Dropdown"
                                     )
                                 }
@@ -601,3 +562,124 @@ fun EditorDialog(
         }
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null){
+    TopAppBar(
+        title = {
+            Text(text = String, color = Color.White)
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+          onAddClick?.let {
+              IconButton(onClick = it) {
+                  Icon(
+                      imageVector = Icons.Default.Add,
+                      contentDescription = "Add",
+                      tint = Color.White
+                  )
+              }
+          }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Gray, // Ensure grey background for the entire TopAppBar
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White
+        )
+
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit, onOptionsClick: () -> Unit, Tab: String = "Map"){
+    val selectedColor = Color.White
+    val unselectedColor = Color.LightGray
+    val backgroundColor = Color.Gray
+
+    TopAppBar(
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .background(
+                            color = if (Tab == "Map")
+                                selectedColor.copy(alpha = 0.3f)
+                            else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .clickable(onClick = Button2Click)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Place,
+                        contentDescription = "Map",
+                        tint = if (Tab == "Map") selectedColor else unselectedColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Map",
+                        color = if (Tab == "Map") selectedColor else unselectedColor,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .background(
+                            color = if (Tab == "Info")
+                                selectedColor.copy(alpha = 0.3f)
+                            else Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .clickable(onClick = Button1Click)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Info",
+                        tint = if (Tab == "Info") selectedColor else unselectedColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = "Info",
+                        color = if (Tab == "Info") selectedColor else unselectedColor,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        actions = {
+            // Options (Ellipsis) Button
+            IconButton(onClick = onOptionsClick) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Options",
+                    tint = Color.White
+                )
+            }
+        },
+        modifier = Modifier.background(backgroundColor),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = backgroundColor,
+            titleContentColor = Color.White
+        )
+    )
+}
+

@@ -1,12 +1,16 @@
 package com.example.fyp_prototype
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,9 +23,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +49,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -61,14 +74,43 @@ import kotlin.random.Random
 //This is the Landing page, users start here when the app is opened
 
 class landing_page : ComponentActivity() {
+    private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     lateinit var userdata: AppData
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         userdata = AppData.getInstance(application)
+        // Request necessary permissions for locations etc
+        requestPermissions()
 
         setContent { // UI
             App(userdata)
+        }
+    }
+
+
+    fun requestPermissions() { // put needed permissions here
+        val permissions = arrayOf(
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.FOREGROUND_SERVICE_LOCATION
+        )
+
+        for (permission in permissions) { // check to see if they are granted
+            if (ContextCompat.checkSelfPermission(this, permission)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    permissions,
+                    REQUEST_PERMISSIONS_REQUEST_CODE
+                )
+                break
+            }
         }
     }
 
@@ -113,6 +155,7 @@ class landing_page : ComponentActivity() {
         val modifier = Modifier
             .padding(16.dp)
             .width(200.dp)
+
         Button( // code submission
             onClick = {
                 if (code_input.length == 6) {
@@ -240,6 +283,7 @@ class landing_page : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun join_create(userdata: AppData, navController: NavController) {
         userdata.reset_data()

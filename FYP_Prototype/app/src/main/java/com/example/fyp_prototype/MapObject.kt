@@ -65,22 +65,28 @@ class MapObject {
             if (icon == "Respawn"){
                 if (teamColor == "red"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redrespawn)
-                }else{
+                }else if (teamColor == "blue"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.bluerespwawn)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.greenrespawn)
                 }
             }else if (icon == "Flag"){
                 if (teamColor == "red"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redflag)
-                }else{
+                }else if (teamColor == "blue"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.blueflag)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.greenflag)
                 }
             }else if (icon == "Warning"){
                 marker.icon = ContextCompat.getDrawable(map.context,R.drawable.emergency)
             }else{
                 if (teamColor == "red"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redx)
-                }else{
+                }else if (teamColor == "blue"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.bluex)
+                }else{
+                    marker.icon = ContextCompat.getDrawable(map.context,R.drawable.greenx)
                 }
             }
 
