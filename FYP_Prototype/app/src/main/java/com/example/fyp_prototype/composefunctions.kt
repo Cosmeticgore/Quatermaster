@@ -210,7 +210,6 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
             }else{
                 topbarwithtext("Sites: Select Site", onBackClick = {navController.navigateUp()})
             }
-
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -601,10 +600,11 @@ fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Un
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit, onOptionsClick: () -> Unit, Tab: String = "Map"){
+fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () -> Unit,urgentpingclick: () -> Unit, sessionClick: () -> Unit, Tab: String = "Map", navController: NavController, Admin: Boolean = false){
     val selectedColor = Color.White
     val unselectedColor = Color.LightGray
     val backgroundColor = Color.Gray
+    var expanded by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -666,13 +666,54 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit, onOptionsClic
             }
         },
         actions = {
-            // Options (Ellipsis) Button
-            IconButton(onClick = onOptionsClick) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Options",
-                    tint = Color.White
-                )
+            Box {IconButton(onClick = {expanded = !expanded}) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Options",
+                        tint = Color.White
+                    )
+                }
+                DropdownMenu(expanded = expanded,
+                    onDismissRequest = {expanded = false}) {
+                    DropdownMenuItem(
+                        text = { Text("View Players") },
+                        onClick = {
+                            navController.navigate("players")
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("View Session ID") },
+                        onClick = {
+                            sessionClick()
+                            expanded = false
+                        }
+                    )
+                    if (Admin == true){
+                        DropdownMenuItem(
+                            text = { Text("Select Game") },
+                            onClick = {
+                                navController.navigate("selectSite")
+                                expanded = false
+                            }
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text("Request Help") },
+                        onClick = {
+                            pingclick()
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("SOS") },
+                        onClick = {
+                            urgentpingclick()
+                            expanded = false
+                        }
+                    )
+
+                }
             }
         },
         modifier = Modifier.background(backgroundColor),
@@ -682,4 +723,5 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit, onOptionsClic
         )
     )
 }
+
 

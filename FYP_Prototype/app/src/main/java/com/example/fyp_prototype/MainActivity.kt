@@ -187,7 +187,7 @@ class MainActivity : ComponentActivity() {
             })
     }
 
-    private fun ping(sessionId: String): Task<String> {
+    fun ping(sessionId: String): Task<String> {
         val data = hashMapOf(
             "sessionId" to sessionId,
             "title" to "Player Needs Help",
@@ -213,7 +213,7 @@ class MainActivity : ComponentActivity() {
             }
     }
 
-    private fun urgentping(sessionId: String): Task<String> {
+    fun urgentping(sessionId: String): Task<String> {
         val data = hashMapOf(
             "sessionId" to sessionId,
             "title" to "Player is in Danger!",
@@ -427,14 +427,25 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun MapHome(User: user, Session_ID: String, navController: NavController) {
+        var admin : Boolean
+        var showDialog by remember { mutableStateOf(false) }
         updateAppdate(userdata)
+        if (userdata.Role.value == "Admin"){
+            admin = true
+        } else{
+            admin = false
+        }
         Scaffold(
             topBar = {
                 gametopbar(
                     Button1Click = { navController.navigate("info") },
-                    Button2Click = { /* Handle map button click if needed */ },
-                    onOptionsClick = { /* Handle options click */ },
-                    Tab = "Map"
+                    Button2Click = {},
+                    pingclick = { ping(Session_ID) },
+                    urgentpingclick = { urgentping(Session_ID) },
+                    Tab = "Map",
+                    navController = navController,
+                    sessionClick = {showDialog = true},
+                    Admin = admin
                 )
             }
         ) { paddingValues ->
@@ -444,13 +455,35 @@ class MainActivity : ComponentActivity() {
                     .padding(paddingValues)
             ) {
                 OsmdroidMapView(User, Session_ID)
+                if (showDialog == true){
+                    ComposeAlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Session ID:") },
+                        text = {
+                            Text(userdata.Session_ID.value.toString())
+                        },
+                        confirmButton = {},
+                        dismissButton = {
+                            TextButton(onClick = { showDialog = false }) {
+                                Text("Close")
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 
     @Composable
     private fun InfoScreen(navController: NavController, Session_ID: String) {
+        var admin : Boolean
         updateAppdate(userdata)
+        var showDialog by remember { mutableStateOf(false) }
+        if (userdata.Role.value == "Admin"){
+            admin = true
+        } else{
+            admin = false
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -462,9 +495,13 @@ class MainActivity : ComponentActivity() {
             ) {
                 gametopbar(
                     Button1Click = {},
-                    Button2Click = { navController.navigate("map") },
-                    onOptionsClick = {},
-                    Tab = "Info"
+                    Button2Click = {navController.navigate("map") },
+                    pingclick = { ping(Session_ID) },
+                    urgentpingclick = { urgentping(Session_ID) },
+                    Tab = "Info",
+                    navController = navController,
+                    sessionClick = {showDialog = true},
+                    Admin = admin
                 )
 
                 Box(
@@ -476,13 +513,6 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
-                        Text(
-                            text = "Session ID: $Session_ID",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
                         Text(
                             text = "Current Site: ${userdata.Cur_Site.value?.name}",
                             style = MaterialTheme.typography.headlineMedium,
@@ -533,94 +563,20 @@ class MainActivity : ComponentActivity() {
                                         )
                                 )
                             }
-                        }
 
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-
-                            Button(
-                                onClick = { navController.navigate("players") },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Gray.copy(alpha = 0.8f)
-                                )
-                            ) {
-                                Text(
-                                    text = "View Players",
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = { navController.navigateUp() },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Gray.copy(alpha = 0.8f)
-                                )
-                            ) {
-                                Text(
-                                    text = "Back to Map",
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            if (userdata.Role.value == "Admin") {
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Button(
-                                    onClick = { navController.navigate("selectSite") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Gray.copy(alpha = 0.8f)
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Select Site/Game",
-                                        color = Color.Black,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = { ping(Session_ID) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Gray.copy(alpha = 0.8f)
-                                )
-                            ) {
-                                Text(
-                                    text = "Request Help",
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = { urgentping(Session_ID) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.Red.copy(alpha = 0.8f)
-                                )
-                            ) {
-                                Text(
-                                    text = "EMERGENCY",
-                                    color = Color.Black,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium
+                            if (showDialog == true){
+                                ComposeAlertDialog(
+                                    onDismissRequest = { showDialog = false },
+                                    title = { Text("Session ID:") },
+                                    text = {
+                                        Text(userdata.Session_ID.value.toString())
+                                    },
+                                    confirmButton = {},
+                                    dismissButton = {
+                                        TextButton(onClick = { showDialog = false }) {
+                                            Text("Close")
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -682,21 +638,16 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                Text(
-                    text = "Session Players",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+                topbarwithtext("Players in Session", onBackClick = {navController.navigateUp()})
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
+                        .padding(16.dp)
                 ) { items(users.value) { user ->
                     Log.i("PlayerList", "Displaying User")
                     PlayerListItem(user)
@@ -704,22 +655,6 @@ class MainActivity : ComponentActivity() {
                 }
 
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = { navController.navigateUp() },
-                modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.8f),
-                )
-            ) {
-                Text(
-                    text = "Back",
-                    color = Color.Black,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
     }
