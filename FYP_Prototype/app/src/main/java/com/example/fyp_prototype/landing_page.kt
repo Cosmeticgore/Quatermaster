@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -137,9 +138,9 @@ class landing_page : ComponentActivity() {
                     type = NavType.StringType
                 })
             ) { backStackEntry ->
-                games_list(navController,userdata, true)
+                games_list(navController, userdata, true)
             }
-            composable("games_designer"){
+            composable("games_designer") {
                 Editor(navController, userdata)
             }
         }
@@ -156,9 +157,11 @@ class landing_page : ComponentActivity() {
         val modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
-        Row (verticalAlignment = Alignment.CenterVertically,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = modifier){
+            modifier = modifier
+        ) {
             Button( // code submission
                 onClick = {
                     if (code_input.length == 6) {
@@ -240,9 +243,11 @@ class landing_page : ComponentActivity() {
         val database = Firebase.database
         val databaseRef = database.getReference("sessions")
         val context = LocalContext.current
-        Row (verticalAlignment = Alignment.CenterVertically,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(16.dp)) {
+            modifier = Modifier.padding(16.dp)
+        ) {
             Button(
                 onClick = {
                     val id = Random.nextInt(100000, 999999).toString() //generates a session ID
@@ -357,7 +362,7 @@ class landing_page : ComponentActivity() {
     }
 
     @Composable
-    private fun Editor(navController: NavController, userdata: AppData){
+    private fun Editor(navController: NavController, userdata: AppData) {
         val context = LocalContext.current
         val database = FirebaseDatabase.getInstance()
         var mapView = remember { MapView(context) }
@@ -369,9 +374,20 @@ class landing_page : ComponentActivity() {
         var showMarkerEdit by remember { mutableStateOf(false) }
         var markersVersion by remember { mutableStateOf(0) }
 
+        fun saveandexit() {
+            userdata.Cur_Game.value?.markers = Markers
+            val Ref = database.getReference("sites")
+
+            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
+                .child(userdata.Cur_Game.value?.gid.toString()).child("markers")
+                .setValue(Markers)
+            navController.navigateUp()
+        }
+
 
         LaunchedEffect(Unit) {
-            Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
+            Configuration.getInstance()
+                .load(context, PreferenceManager.getDefaultSharedPreferences(context))
             Configuration.getInstance().userAgentValue = "AirsoftAPP"
 
             mapView.setMultiTouchControls(true)
@@ -379,116 +395,122 @@ class landing_page : ComponentActivity() {
             mapView.controller.setCenter(initialLocation)
         }
 
-        Box(modifier = Modifier.fillMaxSize()){
-            AndroidView(
-                factory = { mapView },
-                modifier = Modifier.fillMaxSize(),
-                update = { mapView ->
-                    mapView.overlays.clear()
-                    Markers.forEach { marker ->
-                        marker.draw(mapView, true)
-                    }
-                    mapView.invalidate()
-                }
-            )
-
-            Image(
-                painter = painterResource(id = R.drawable.crosshair),
-                contentDescription = "Crosshair",
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-
-                Button(
-                    onClick = {
-                        userdata.Cur_Game.value?.markers = Markers
-                        val Ref = database.getReference("sites")
-
-                        Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                            .child(userdata.Cur_Game.value?.gid.toString()).child("markers")
-                            .setValue(Markers)
-                        navController.navigateUp()
-                    }
-                ) {
-                    Text("Save & Exit")
-                }
-
-                Button(
-                    onClick = {
-                        showMarkerEdit = true
-                    }
-                ) {
-                    Text("Add Marker")
-                }
-
-                Button(
-                    onClick = {
-                        showBrief = true
-                    }
-                ) {
-                    Text("Edit Brief")
-                }
-                if (showBrief == true) {
-                    twotextinputDialog(
-                        userdata.Cur_Game.value?.name ?: return,
-                        userdata.Cur_Game.value?.desc ?: return,
-                        onDismiss = { showBrief = false },
-                        onConfirm = { title, desc ->
-                            val Ref = database.getReference("sites")
-                            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                                .child(userdata.Cur_Game.value?.gid.toString()).child("name")
-                                .setValue(title).addOnSuccessListener {
-                                    userdata.Cur_Game.value?.name = title
-                                }
-                            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                                .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
-                                .setValue(desc).addOnSuccessListener {
-                                    userdata.Cur_Game.value?.desc = desc
-                                }
-                            showBrief = false
-
+        Scaffold(topBar = {
+            topbarwithtext("Editor", onBackClick = { saveandexit() },
+                onAddClick = {})
+        }) { paddingValues ->
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                AndroidView(// map view
+                    factory = { mapView },
+                    modifier = Modifier.fillMaxSize(),
+                    update = { mapView ->
+                        mapView.overlays.clear()
+                        Markers.forEach { marker ->
+                            marker.draw(mapView, true)
                         }
-                    )
-                }
+                        mapView.invalidate()
+                    }
+                )
 
-                if (showMarkerEdit == true) {
-                    EditorDialog(
-                        onDismiss = { showMarkerEdit = false },
-                        onConfirm = { title, desc, team, markerType ->
-                            val centerIGeoPoint = mapView.mapCenter
-                            if (centerIGeoPoint != null) {
-                                val centerPoint =
-                                    GeoPointData(centerIGeoPoint.latitude, centerIGeoPoint.longitude)
-                                selectedPoint = centerPoint
-                                showMarkerEdit = true
+                Image(
+                    painter = painterResource(id = R.drawable.crosshair),
+                    contentDescription = "Crosshair",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    Button(
+                        onClick = {
+                            saveandexit()
+                        }
+                    ) {
+                        Text("Save & Exit")
+                    }
+
+                    Button(
+                        onClick = {
+                            showMarkerEdit = true
+                        }
+                    ) {
+                        Text("Add Marker")
+                    }
+
+                    Button(
+                        onClick = {
+                            showBrief = true
+                        }
+                    ) {
+                        Text("Edit Brief")
+                    }
+                    if (showBrief == true) {
+                        twotextinputDialog(
+                            userdata.Cur_Game.value?.name ?: return@Box,
+                            userdata.Cur_Game.value?.desc ?: return@Box,
+                            onDismiss = { showBrief = false },
+                            onConfirm = { title, desc ->
+                                val Ref = database.getReference("sites")
+                                Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                    .child("games")
+                                    .child(userdata.Cur_Game.value?.gid.toString()).child("name")
+                                    .setValue(title).addOnSuccessListener {
+                                        userdata.Cur_Game.value?.name = title
+                                    }
+                                Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                    .child("games")
+                                    .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
+                                    .setValue(desc).addOnSuccessListener {
+                                        userdata.Cur_Game.value?.desc = desc
+                                    }
+                                showBrief = false
+
                             }
-                            selectedPoint?.let { point ->
-                                Log.i("Marker maker", "Confirm clicked in Editor")
-                                val tempList: MutableList<GeoPointData> = ArrayList()
-                                tempList.add(point)
-                                Log.i("Marker maker","Adding Marker $title at $point")
-                                Markers.add(
-                                    MapObject(
-                                        type = 0,
-                                        title = title,
-                                        desc = desc,
-                                        geopoints = tempList,
-                                        team = team,
-                                        icon = markerType
-                                    )
-                                )
+                        )
+                    }
 
-                                markersVersion++
-                            }?: Log.e("Marker maker", "selectedPoint is null")
-                            showMarkerEdit = false
-                        })
+
+                    // marker dialog
+                    if (showMarkerEdit == true) {
+                        EditorDialog(
+                            onDismiss = { showMarkerEdit = false },
+                            onConfirm = { title, desc, team, markerType ->
+                                val centerIGeoPoint = mapView.mapCenter
+                                if (centerIGeoPoint != null) {
+                                    val centerPoint =
+                                        GeoPointData(
+                                            centerIGeoPoint.latitude,
+                                            centerIGeoPoint.longitude
+                                        )
+                                    selectedPoint = centerPoint
+                                    showMarkerEdit = true
+                                }
+                                selectedPoint?.let { point ->
+                                    Log.i("Marker maker", "Confirm clicked in Editor")
+                                    val tempList: MutableList<GeoPointData> = ArrayList()
+                                    tempList.add(point)
+                                    Log.i("Marker maker", "Adding Marker $title at $point")
+                                    Markers.add(
+                                        MapObject(
+                                            type = 0,
+                                            title = title,
+                                            desc = desc,
+                                            geopoints = tempList,
+                                            team = team,
+                                            icon = markerType
+                                        )
+                                    )
+
+                                    markersVersion++
+                                } ?: Log.e("Marker maker", "selectedPoint is null")
+                                showMarkerEdit = false
+                            })
+                    }
                 }
             }
         }
