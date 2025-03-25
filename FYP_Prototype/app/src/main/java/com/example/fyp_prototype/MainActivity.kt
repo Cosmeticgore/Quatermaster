@@ -88,7 +88,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
-import androidx.compose.material3.AlertDialog as ComposeAlertDialog
+import androidx.compose.material3.AlertDialog
 
 
 class MainActivity : ComponentActivity() {
@@ -456,7 +456,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 OsmdroidMapView(User, Session_ID)
                 if (showDialog == true){
-                    ComposeAlertDialog(
+                    AlertDialog(
                         onDismissRequest = { showDialog = false },
                         title = { Text("Session ID:") },
                         text = {
@@ -564,20 +564,13 @@ class MainActivity : ComponentActivity() {
                                         )
                                 )
                             }
-
                             if (showDialog == true){
-                                ComposeAlertDialog(
+                                AlertDialog(
                                     onDismissRequest = { showDialog = false },
                                     title = { Text("Session ID:") },
-                                    text = {
-                                        Text(userdata.Session_ID.value.toString())
-                                    },
+                                    text = { Text(userdata.Session_ID.value.toString()) },
                                     confirmButton = {},
-                                    dismissButton = {
-                                        TextButton(onClick = { showDialog = false }) {
-                                            Text("Close")
-                                        }
-                                    }
+                                    dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Close") } }
                                 )
                             }
                         }
@@ -612,7 +605,7 @@ class MainActivity : ComponentActivity() {
                                         userData.team,
                                         userData.role,
                                         userData.status,
-                                        ""
+                                        username = userData.username
                                     )
                                 )
                                 Log.i("PlayerList", "Added User ${userData.userId}")
@@ -668,7 +661,7 @@ class MainActivity : ComponentActivity() {
                 .padding(vertical = 12.dp)
         ) {
             Text(
-                text = "User ID: ${user.userId}",
+                text = "Callsign: ${user.username}",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -766,7 +759,7 @@ class MainActivity : ComponentActivity() {
         }
 
         if (showTeamDialog) {
-            ComposeAlertDialog(
+            AlertDialog(
                 onDismissRequest = { showTeamDialog = false },
                 title = { Text("Select Team") },
                 text = {
@@ -819,7 +812,7 @@ class MainActivity : ComponentActivity() {
         }
 
         if (showRoleDialog) {
-            ComposeAlertDialog(
+            AlertDialog(
                 onDismissRequest = { showRoleDialog = false },
                 title = { Text("Select Role") },
                 text = {

@@ -93,15 +93,17 @@ class MapObject {
             map.overlays.add(marker)
         }
 
-        if (type == 1) {
+        if (type == 1 && geoPointsList.size > 1) {
             val polyline = Polyline(map)
             polyline.setPoints(geoPointsList)
+
             polyline.outlinePaint.color = colour
             polyline.outlinePaint.strokeWidth = width
+
             map.overlays.add(polyline)
         }
 
-        if (type == 2) {
+        if (type == 2 && geoPointsList.size > 2 ) {
             val polygon = Polygon(map)
             polygon.setPoints(geoPointsList)
             polygon.fillPaint.color = colour
@@ -113,5 +115,7 @@ class MapObject {
     data class GeoPointData(
         val latitude: Double = 0.0,
         val longitude: Double = 0.0
-    )
+    ){
+        constructor() : this(0.0, 0.0)
+    }
 }

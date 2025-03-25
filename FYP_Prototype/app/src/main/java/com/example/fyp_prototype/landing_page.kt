@@ -1,8 +1,10 @@
 package com.example.fyp_prototype
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -26,6 +28,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,12 +68,18 @@ import com.example.fyp_prototype.MapObject.GeoPointData
 import com.example.fyp_prototype.ui.theme.FYP_PrototypeTheme
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.messaging.FirebaseMessaging
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.DisposableEffect
+import com.google.android.gms.location.LocationServices
 import kotlin.math.log
 
 import kotlin.random.Random
@@ -316,7 +326,8 @@ class landing_page : ComponentActivity() {
             remember { mutableStateOf(sharedPref.getString("Quatermaster.key.UID", "") ?: "") }
 
         val UIDset = remember { mutableStateOf(UID.value.isEmpty()) }
-        val showDialog = remember { mutableStateOf(username.value.isEmpty()) }
+        var showDialog = remember { mutableStateOf(username.value.isEmpty()) }
+        var showUserDialog by remember { mutableStateOf(false) }
 
         if (UIDset.value) {
             val newUID = "user_${System.currentTimeMillis()}"
@@ -339,6 +350,8 @@ class landing_page : ComponentActivity() {
         } else {
             userdata.Username.value = username.value
         }
+
+
         FYP_PrototypeTheme {
             Box(
                 modifier = Modifier
@@ -350,13 +363,25 @@ class landing_page : ComponentActivity() {
                 ) {
                     infotopbar(
                         onUsernameClick = { showDialog.value = true },
-                        onSiteClick = { navController.navigate("sites") }
+                        onSiteClick = { navController.navigate("sites") },
+                        onUserclick = { showUserDialog = true}
+
                     )
                     Join_session(userdata)
                     Spacer(Modifier.height(32.dp))
                     Create_session(userdata)
                     Spacer(Modifier.height(32.dp))
+                    if (showUserDialog == true){
+                        AlertDialog(
+                            onDismissRequest = { showUserDialog = false },
+                            title = { Text("User ID:") },
+                            text = { Text(userdata.user_ID.value.toString()) },
+                            confirmButton = {},
+                            dismissButton = { TextButton(onClick = { showUserDialog = false }) { Text("Close") } }
+                        )
+                    }
                 }
+
             }
         }
     }
@@ -367,23 +392,76 @@ class landing_page : ComponentActivity() {
         val database = FirebaseDatabase.getInstance()
         var mapView = remember { MapView(context) }
         var selectedPoint: GeoPointData? = null
-        var tempObject: MapObject
         var Markers: MutableList<MapObject> = userdata.Cur_Game.value?.markers ?: return
         var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
         var showBrief by remember { mutableStateOf(false) }
         var showMarkerEdit by remember { mutableStateOf(false) }
         var markersVersion by remember { mutableStateOf(0) }
+        var expanded by remember { mutableStateOf(false) }
+        var shownedit by remember { mutableStateOf("Marker") }
+        var linePoints by remember { mutableStateOf<MutableList<GeoPointData>>(mutableListOf()) }
+        val SID = userdata.Cur_Site.value?.site_ID
+        val GID = userdata.Cur_Game.value?.gid
+        val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+        var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
 
         fun saveandexit() {
-            userdata.Cur_Game.value?.markers = Markers
-            val Ref = database.getReference("sites")
+            val site = userdata.Cur_Site.value
+            val game = userdata.Cur_Game.value
 
-            Ref.child(userdata.Cur_Site.value?.site_ID.toString()).child("games")
-                .child(userdata.Cur_Game.value?.gid.toString()).child("markers")
-                .setValue(Markers)
-            navController.navigateUp()
+            if (site != null && game != null) {
+                userdata.Cur_Game.value?.markers = Markers
+
+                val Ref = database.getReference("sites")
+                Ref.child(site.site_ID)
+                    .child("games")
+                    .child(game.gid)
+                    .child("markers")
+                    .setValue(Markers)
+                    .addOnSuccessListener {
+                        Log.d("SaveAndExit", "Markers saved successfully")
+                        navController.navigateUp()
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("SaveAndExit", "Failed to save markers", exception)
+                        navController.navigateUp()
+                    }
+            } else {
+
+                Log.e("SaveAndExit", "Cannot save: Site or Game is null")
+
+            }
         }
 
+        fun getCurLocation() {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        location?.let {
+                            val geoPoint = GeoPoint(it.latitude, it.longitude)
+                            currentLocation = geoPoint
+
+                            mapView.controller.setCenter(geoPoint)
+                            mapView.controller.setZoom(18.0)
+                            mapView.invalidate()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Location", "Error getting location", e)
+                    }
+            }
+        }
+
+        DisposableEffect(mapView) {
+            mapView.onResume()
+            onDispose {
+                mapView.onPause()
+            }
+        }
 
         LaunchedEffect(Unit) {
             Configuration.getInstance()
@@ -393,11 +471,36 @@ class landing_page : ComponentActivity() {
             mapView.setMultiTouchControls(true)
             mapView.controller.setZoom(15.0)
             mapView.controller.setCenter(initialLocation)
+
+            val pullRef = database.getReference("sites")
+
+
+            pullRef.child(SID.toString()).child("games").child(GID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val loadedMarkers = snapshot.children.mapNotNull { child ->
+                        child.getValue(MapObject::class.java)
+                    }.toMutableList()
+
+                    Markers = loadedMarkers
+                    userdata.Cur_Game.value?.markers = loadedMarkers
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Editor", "Error loading markers: ${error.message}")
+                }
+            })
+            getCurLocation()
         }
 
         Scaffold(topBar = {
-            topbarwithtext("Editor", onBackClick = { saveandexit() },
-                onAddClick = {})
+            editortopbar(
+                "Editor", onBackClick = { saveandexit() },
+                onAddClick = { expanded = true },
+                onMarkerClick = {shownedit = "Marker"},
+                onLineClick = {shownedit = "Line"},
+                onPolygonClick = {shownedit = "Polygon"},
+                onBriefClick = {showBrief = true}
+            )
         }) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 AndroidView(// map view
@@ -425,30 +528,109 @@ class landing_page : ComponentActivity() {
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Column {
+                        if (shownedit == "Marker") {
+                            Button(
+                                onClick = {
+                                    showMarkerEdit = true
+                                }
+                            ) {
+                                Text("Add Marker")
+                            }
+                        } else if (shownedit == "Line") {
+                                Button(
+                                    onClick = {
+                                        val centerIGeoPoint = mapView.mapCenter
+                                        if (centerIGeoPoint != null) {
+                                            val centerPoint = GeoPointData(
+                                                centerIGeoPoint.latitude,
+                                                centerIGeoPoint.longitude
+                                            )
+                                            linePoints.add(centerPoint)
+                                        }
+                                    }
+                                ) {
+                                    Text("Add Point")
+                                }
 
-                    Button(
-                        onClick = {
-                            saveandexit()
+                                Button(
+                                    onClick = {
+                                        Markers.add(
+                                            MapObject(
+                                                type = 1,
+                                                title = "Line",
+                                                desc = "Line",
+                                                geopoints = linePoints.toMutableList(),
+                                                team = "None",
+                                                icon = "None"
+                                            )
+                                        )
+                                        linePoints.clear()
+                                        markersVersion++
+                                        mapView.invalidate()
+                                    }
+                                ) {
+                                    Text("Finish Line")
+                                }
+                        } else {
+                                Button(
+                                    onClick = {
+                                        val centerIGeoPoint = mapView.mapCenter
+                                        if (centerIGeoPoint != null) {
+                                            val centerPoint = GeoPointData(
+                                                centerIGeoPoint.latitude,
+                                                centerIGeoPoint.longitude
+                                            )
+                                            linePoints.add(centerPoint)
+                                        }
+
+                                    }
+                                ) {
+                                    Text("Add Point")
+                                }
+
+                                Button(
+                                    onClick = {
+                                        Markers.add(
+                                            MapObject(
+                                                type = 2,
+                                                title = "Polygon",
+                                                desc = "Polygon",
+                                                geopoints = linePoints.toMutableList(),
+                                                team = "None",
+                                                icon = "None"
+                                            )
+                                        )
+                                        linePoints.clear()
+                                        markersVersion++
+                                        mapView.invalidate()
+                                    }
+                                ) {
+                                    Text("Finish Polygon")
+                                }
                         }
-                    ) {
-                        Text("Save & Exit")
+                        Button(
+                            onClick = {
+                                if (!Markers.isEmpty()){
+                                    Markers.removeAt(Markers.lastIndex)
+                                }
+                                markersVersion++
+                                mapView.invalidate()
+                            }
+                        ){
+                            Text("Undo")
+                        }
+
+                        Button(
+                            onClick = {
+                                getCurLocation()
+                            }
+                        ){
+                            Text("My Location")
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            showMarkerEdit = true
-                        }
-                    ) {
-                        Text("Add Marker")
-                    }
 
-                    Button(
-                        onClick = {
-                            showBrief = true
-                        }
-                    ) {
-                        Text("Edit Brief")
-                    }
                     if (showBrief == true) {
                         twotextinputDialog(
                             userdata.Cur_Game.value?.name ?: return@Box,
@@ -511,6 +693,7 @@ class landing_page : ComponentActivity() {
                                 showMarkerEdit = false
                             })
                     }
+                    //line/polygon dialog
                 }
             }
         }

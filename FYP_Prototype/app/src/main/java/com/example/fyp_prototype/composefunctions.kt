@@ -352,7 +352,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                             userdata.Cur_Game.value = game
                             val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
                             session_Ref.child("gid").setValue(game.gid)
-                            navController.navigateUp()
+                            navController.navigate("map")
                         }
                     })
                     Log.i("GameList", "Displaying Site")
@@ -725,7 +725,7 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit){
+fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: () -> Unit){
     var expanded by remember { mutableStateOf(false) }
     TopAppBar(
         title = {
@@ -757,6 +757,13 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit){
                             expanded = false
                         }
                     )
+                    DropdownMenuItem(
+                        text = { Text("Show User ID") },
+                        onClick = {
+                            onUserclick()
+                            expanded = false
+                        }
+                    )
                 }
             }
         },
@@ -770,6 +777,75 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit){
 
 
 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null,onMarkerClick: () -> Unit,onLineClick: () -> Unit,onPolygonClick: () -> Unit,onBriefClick: () -> Unit){
+    var expanded by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = {
+            Text(text = String, color = Color.White)
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+        },
+        actions = {
+            onAddClick?.let {
+                IconButton(onClick = {expanded = true}) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        tint = Color.White
+                    )
+                }
+            }
+
+            DropdownMenu(expanded = expanded,
+                onDismissRequest = {expanded = false}) {
+                DropdownMenuItem(
+                    text = { Text("Marker") },
+                    onClick = {
+                        onMarkerClick()
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Line") },
+                    onClick = {
+                        onLineClick()
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Polygon") },
+                    onClick = {
+                        onPolygonClick()
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Edit Brief") },
+                    onClick = {
+                        onBriefClick()
+                        expanded = false
+                    }
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Gray, // Ensure grey background for the entire TopAppBar
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White
+        )
+
+    )
 }
 
 
