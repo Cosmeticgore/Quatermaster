@@ -12,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -141,7 +143,6 @@ class landing_page : ComponentActivity() {
                 Editor(navController, userdata)
             }
         }
-
     }
 
 
@@ -154,77 +155,82 @@ class landing_page : ComponentActivity() {
         val databaseRef = database.getReference("sessions")
         val modifier = Modifier
             .padding(16.dp)
-            .width(200.dp)
+            .fillMaxWidth()
+        Row (verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier){
+            Button( // code submission
+                onClick = {
+                    if (code_input.length == 6) {
 
-        Button( // code submission
-            onClick = {
-                if (code_input.length == 6) {
+                        databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
 
-                    databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
+                            val newUser = user( //create a new user
+                                userId = userdata.user_ID.value.toString(),
+                                username = userdata.Username.value.toString()
+                            )
 
-                        val newUser = user( //create a new user
-                            userId = userdata.user_ID.value.toString(),
-                            username = userdata.Username.value.toString()
-                        )
-
-                        if (snapshot.exists()) {
-                            databaseRef.child(code_input).child("users").child(newUser.userId)
-                                .setValue(newUser).addOnSuccessListener {
-                                    val Intent = Intent(
-                                        context,
-                                        MainActivity::class.java
-                                    ).apply { // pass values to the main activity
-                                        userdata.updateAppData(
-                                            newUser.userId,
-                                            code_input,
-                                            "Player",
-                                            userdata.Team.value.toString(),
-                                            userdata.Status.value.toString()
+                            if (snapshot.exists()) {
+                                databaseRef.child(code_input).child("users").child(newUser.userId)
+                                    .setValue(newUser).addOnSuccessListener {
+                                        val Intent = Intent(
+                                            context,
+                                            MainActivity::class.java
+                                        ).apply { // pass values to the main activity
+                                            userdata.updateAppData(
+                                                newUser.userId,
+                                                code_input,
+                                                "Player",
+                                                userdata.Team.value.toString(),
+                                                userdata.Status.value.toString()
+                                            )
+                                        }
+                                        context.startActivity(Intent) // move to main
+                                    }.addOnFailureListener { e -> // error handling
+                                        val err_toast = Toast.makeText(
+                                            context,
+                                            "Failed to Join Session - Connection Issue",
+                                            Toast.LENGTH_SHORT
                                         )
+                                        err_toast.show()
                                     }
-                                    context.startActivity(Intent) // move to main
-                                }.addOnFailureListener { e -> // error handling
-                                    val err_toast = Toast.makeText(
-                                        context,
-                                        "Failed to Join Session - Connection Issue",
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    err_toast.show()
-                                }
-                        } else {
-                            val err_toast = Toast.makeText(
+                            } else {
+                                val err_toast = Toast.makeText(
+                                    context,
+                                    "Failed to Join Session - Code Invalid",
+                                    Toast.LENGTH_SHORT
+                                )
+                                err_toast.show()
+                            }
+                        }
+                    } else {
+                        val err_toast =
+                            Toast.makeText(
                                 context,
-                                "Failed to Join Session - Code Invalid",
+                                "Code must be 6 digits long",
                                 Toast.LENGTH_SHORT
                             )
-                            err_toast.show()
-                        }
+                        err_toast.show()
                     }
-                } else {
-                    val err_toast =
-                        Toast.makeText(context, "Code must be 6 digits long", Toast.LENGTH_SHORT)
-                    err_toast.show()
-                }
 
+                }
+            ) {
+                Text("Join Session")
             }
-        ) {
-            Text("Join Session")
+
+            OutlinedTextField( // code input field
+                value = code_input,
+                onValueChange = {
+                    if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                        code_input = it
+                    }
+                },
+                label = { Text("Enter 6-digit code") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
+                modifier = modifier
+            )
         }
-
-        Spacer(Modifier.height(8.dp))
-
-        OutlinedTextField( // code input field
-            value = code_input,
-            onValueChange = {
-                if (it.length <= 6 && it.all { char -> char.isDigit() }) {
-                    code_input = it
-                }
-            },
-            label = { Text("Enter 6-digit code") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
-            modifier = modifier
-        )
 
     }
 
@@ -234,52 +240,60 @@ class landing_page : ComponentActivity() {
         val database = Firebase.database
         val databaseRef = database.getReference("sessions")
         val context = LocalContext.current
-        Button(
-            onClick = {
-                val id = Random.nextInt(100000, 999999).toString() //generates a session ID
-                val newUser = user( //creates a new user
-                    userId = userdata.user_ID.value.toString(),
-                    role = "Admin",
-                    username = userdata.Username.value.toString()
-                )
+        Row (verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(16.dp)) {
+            Button(
+                onClick = {
+                    val id = Random.nextInt(100000, 999999).toString() //generates a session ID
+                    val newUser = user( //creates a new user
+                        userId = userdata.user_ID.value.toString(),
+                        role = "Admin",
+                        username = userdata.Username.value.toString()
+                    )
 
-                val session = session( //creates the session
-                    session_Id = id,
-                    users = mapOf(userdata.user_ID.value.toString() to newUser)
-                )
+                    val session = session( //creates the session
+                        session_Id = id,
+                        users = mapOf(userdata.user_ID.value.toString() to newUser)
+                    )
 
-                FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                    if (!task.isSuccessful) {
-                        Log.w("Fetching FCM registration token failed", task.exception)
-                        return@OnCompleteListener
-                    }
-                    newUser.not_token = task.result
-                })
-
-                databaseRef.child(id).setValue(session) // adds that session to the database
-                    .addOnSuccessListener {
-                        val Intent = Intent(
-                            context,
-                            MainActivity::class.java
-                        ).apply { // passes values to main
-                            userdata.updateAppData(
-                                newUser.userId,
-                                id,
-                                newUser.role,
-                                userdata.Team.value.toString(),
-                                userdata.Status.value.toString()
-                            )
+                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                        if (!task.isSuccessful) {
+                            Log.w("Fetching FCM registration token failed", task.exception)
+                            return@OnCompleteListener
                         }
-                        context.startActivity(Intent) // move to main
-                    }
-                    .addOnFailureListener { e ->// error handling
-                        val err_toast =
-                            Toast.makeText(context, "Failed to Create Session", Toast.LENGTH_SHORT)
-                        err_toast.show()
-                    }
+                        newUser.not_token = task.result
+                    })
+
+                    databaseRef.child(id).setValue(session) // adds that session to the database
+                        .addOnSuccessListener {
+                            val Intent = Intent(
+                                context,
+                                MainActivity::class.java
+                            ).apply { // passes values to main
+                                userdata.updateAppData(
+                                    newUser.userId,
+                                    id,
+                                    newUser.role,
+                                    userdata.Team.value.toString(),
+                                    userdata.Status.value.toString()
+                                )
+                            }
+                            context.startActivity(Intent) // move to main
+                        }
+                        .addOnFailureListener { e ->// error handling
+                            val err_toast =
+                                Toast.makeText(
+                                    context,
+                                    "Failed to Create Session",
+                                    Toast.LENGTH_SHORT
+                                )
+                            err_toast.show()
+                        }
+                }
+            ) {
+                Text("Create Session")
             }
-        ) {
-            Text("Create Session")
         }
     }
 
@@ -323,29 +337,20 @@ class landing_page : ComponentActivity() {
         FYP_PrototypeTheme {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Column( // make sure the all the buttons stay in the middle
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.fillMaxSize()
                 ) {
+                    infotopbar(
+                        onUsernameClick = { showDialog.value = true },
+                        onSiteClick = { navController.navigate("sites") }
+                    )
                     Join_session(userdata)
                     Spacer(Modifier.height(32.dp))
                     Create_session(userdata)
                     Spacer(Modifier.height(32.dp))
-                    Button(
-                        onClick = {
-                            navController.navigate("sites")
-                        }
-                    ) {
-                        Text(
-                            text = "Sites",
-                            color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
         }

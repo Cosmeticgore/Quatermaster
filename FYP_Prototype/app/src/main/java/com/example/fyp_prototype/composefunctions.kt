@@ -712,7 +712,6 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                             expanded = false
                         }
                     )
-
                 }
             }
         },
@@ -722,6 +721,55 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
             titleContentColor = Color.White
         )
     )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit){
+    var expanded by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = {
+            Text(text = "Join or Create a Session", color = Color.White)
+        },
+        actions = {
+            Box(){
+                IconButton(onClick = {expanded = !expanded}) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Options",
+                        tint = Color.White
+                    )
+                }
+
+                DropdownMenu(expanded = expanded,
+                    onDismissRequest = {expanded = false}) {
+                    DropdownMenuItem(
+                        text = { Text("Set Username") },
+                        onClick = {
+                            onUsernameClick()
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("View Sites") },
+                        onClick = {
+                            onSiteClick()
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Gray, // Ensure grey background for the entire TopAppBar
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White
+        )
+
+    )
+
+
+
 }
 
 
