@@ -702,6 +702,133 @@ fun EditorDialog(
     )
 }
 
+@Composable
+fun LinePolyEditorDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, String, String) -> Unit,
+){
+    var title by remember { mutableStateOf("") }
+    var desc by remember { mutableStateOf("") }
+
+    val ColourOptions = listOf("Grey", "Red", "Blue","Green","Black","Yellow")
+    var WeightOptions = listOf("1", "2", "4","5","10")
+
+    var firstDropdownExpanded by remember { mutableStateOf(false) }
+    var secondDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedColourOption by remember { mutableStateOf(ColourOptions[0]) }
+    var selectedWeightOption by remember { mutableStateOf(ColourOptions[0]) }
+
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Marker Settings")},
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ){
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = {title = it},
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = {desc = it},
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Column {
+                    Text("Select Colour:")
+                    Box {
+                        OutlinedTextField(
+                            value = selectedColourOption,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { firstDropdownExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.ArrowDropDown,
+                                        contentDescription = "Dropdown"
+                                    )
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = firstDropdownExpanded,
+                            onDismissRequest = { firstDropdownExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            ColourOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        selectedColourOption = option
+                                        firstDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Column {
+                    Text("Select Weight")
+                    Box {
+                        OutlinedTextField(
+                            value = selectedWeightOption,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            trailingIcon = {
+                                IconButton(onClick = { secondDropdownExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.ArrowDropDown,
+                                        contentDescription = "Dropdown"
+                                    )
+                                }
+                            }
+                        )
+
+                        DropdownMenu(
+                            expanded = secondDropdownExpanded,
+                            onDismissRequest = { secondDropdownExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ) {
+                            WeightOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option) },
+                                    onClick = {
+                                        selectedWeightOption = option
+                                        secondDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    Log.d("EditorDialog", "Confirm clicked: title=$title, desc=$desc, colour=$selectedColourOption, weight=$WeightOptions")
+                    onConfirm(title, desc, selectedColourOption, WeightOptions.toString())
+                    onDismiss()
+                }
+            ) {
+                Text("Confirm")
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null){

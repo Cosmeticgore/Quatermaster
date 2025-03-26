@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -47,7 +48,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -401,6 +401,7 @@ class landing_page : ComponentActivity() {
         var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
         var showBrief by remember { mutableStateOf(false) }
         var showMarkerEdit by remember { mutableStateOf(false) }
+        var showPolyEdit by remember { mutableStateOf(false) }
         var markersVersion by remember { mutableStateOf(0) }
         var expanded by remember { mutableStateOf(false) }
         var shownedit by remember { mutableStateOf("Marker") }
@@ -409,6 +410,7 @@ class landing_page : ComponentActivity() {
         val GID = userdata.Cur_Game.value?.gid
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
+        var type by remember { mutableStateOf(0) }
 
         var Markers: MutableList<MapObject>
 
@@ -606,19 +608,8 @@ class landing_page : ComponentActivity() {
 
                                 Button(
                                     onClick = {
-                                        Markers.add(
-                                            MapObject(
-                                                type = 1,
-                                                title = "Line",
-                                                desc = "Line",
-                                                geopoints = linePoints.toMutableList(),
-                                                team = "None",
-                                                icon = "None"
-                                            )
-                                        )
-                                        linePoints.clear()
-                                        markersVersion++
-                                        mapView.invalidate()
+                                        type = 1
+                                        showPolyEdit = true
                                     }
                                 ) {
                                     Text("Finish Line")
@@ -642,19 +633,8 @@ class landing_page : ComponentActivity() {
 
                                 Button(
                                     onClick = {
-                                        Markers.add(
-                                            MapObject(
-                                                type = 2,
-                                                title = "Polygon",
-                                                desc = "Polygon",
-                                                geopoints = linePoints.toMutableList(),
-                                                team = "None",
-                                                icon = "None"
-                                            )
-                                        )
-                                        linePoints.clear()
-                                        markersVersion++
-                                        mapView.invalidate()
+                                        type = 2
+                                        showPolyEdit = true
                                     }
                                 ) {
                                     Text("Finish Polygon")
@@ -767,6 +747,61 @@ class landing_page : ComponentActivity() {
                             })
                     }
                     //line/polygon dialog
+                    if (showPolyEdit == true) {
+                        LinePolyEditorDialog(
+                            onDismiss = { showPolyEdit = false },
+                            onConfirm = { title, desc, colour, weight ->
+                                val centerIGeoPoint = mapView.mapCenter
+                                if (centerIGeoPoint != null) {
+                                    val centerPoint =
+                                        GeoPointData(
+                                            centerIGeoPoint.latitude,
+                                            centerIGeoPoint.longitude
+                                        )
+                                    selectedPoint = centerPoint
+                                    showPolyEdit = true
+                                }
+                                var ColourCon: Int = Color.GRAY
+                                var WeightCon = 1F
+
+                                when (weight) {
+                                    "1" -> WeightCon = 1F
+                                    "2" -> WeightCon = 2F
+                                    "4" -> WeightCon = 4F
+                                    "5" -> WeightCon = 5F
+                                    "10" -> WeightCon = 10F
+                                }
+
+                                when (colour) {
+                                    "Grey" -> ColourCon = Color.GRAY
+                                    "Red" -> ColourCon = Color.RED
+                                    "Blue" -> ColourCon = Color.BLUE
+                                    "Green" -> ColourCon = Color.GREEN
+                                    "Black" -> ColourCon = Color.BLACK
+                                    "Yellow" -> ColourCon = Color.YELLOW
+                                }
+
+
+                                selectedPoint?.let { point ->
+                                    Markers.add(
+                                        MapObject(
+                                            type = type,
+                                            title = title,
+                                            desc = desc,
+                                            geopoints = linePoints.toMutableList(),
+                                            width = WeightCon,
+                                            colour = ColourCon
+                                        )
+                                    )
+                                    linePoints.clear()
+                                    markersVersion++
+                                    mapView.invalidate()
+
+                                    markersVersion++
+                                } ?: Log.e("Marker maker", "selectedPoint is null")
+                                showMarkerEdit = false
+                            })
+                    }
                 }
             }
         }
