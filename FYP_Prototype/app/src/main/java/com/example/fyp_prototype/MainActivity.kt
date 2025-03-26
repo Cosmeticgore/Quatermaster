@@ -896,17 +896,3 @@ class MainActivity : ComponentActivity() {
         })
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

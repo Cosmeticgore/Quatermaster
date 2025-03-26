@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
+import android.location.LocationRequest
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -80,6 +81,8 @@ import org.osmdroid.views.MapView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.DisposableEffect
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import kotlin.math.log
 
 import kotlin.random.Random
@@ -475,7 +478,7 @@ class landing_page : ComponentActivity() {
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                fusedLocationClient.lastLocation
+                fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { location: Location? ->
                         location?.let {
                             val geoPoint = GeoPoint(it.latitude, it.longitude)
