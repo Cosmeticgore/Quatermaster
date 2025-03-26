@@ -1,6 +1,5 @@
 package com.example.fyp_prototype
 
-import android.R
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,12 +21,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -52,10 +51,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
-import com.example.fyp_prototype.ui.theme.PurpleGrey40
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -141,6 +138,23 @@ fun TextinputDialog(onInputSubmitted: (String) -> Unit, Message: String) {
 }
 
 @Composable
+fun areyoursureDialog(OnConfirm: () -> Unit,OnDismiss:() -> Unit, Message: String){
+    AlertDialog(
+        onDismissRequest = {OnDismiss()},
+        title = { Text(Message)},
+        text = {},
+        confirmButton = {TextButton(onClick = { OnConfirm() }) {
+            Text("Yes")
+        }},
+        dismissButton = {
+            TextButton(onClick = { OnDismiss() }) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
 fun site_view_screen(navController: NavController, userdata : AppData, edit: Boolean) {
     val sites = remember { mutableStateOf<List<site>>(emptyList()) }
     val database = FirebaseDatabase.getInstance()
@@ -217,20 +231,26 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                     .padding(16.dp)
             ) {
                 items(sites.value) { site ->
-                    SiteListItem(site, onItemclick = { selectedSite ->
-                        if (edit == true){
-                            userdata.Cur_Site.value = site
-                            navController.navigate("games_list/${selectedSite.site_ID}")
-                        } else {
-                            userdata.Cur_Site.value = site
-                            val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
-                            session_Ref.child("stid").setValue(site.site_ID)
-                            navController.navigate("games_list/${selectedSite.site_ID}"){
-                                popUpTo("info") { inclusive = false }
-                                launchSingleTop = true
+                    SiteListItem(
+                        site, onItemclick = { selectedSite ->
+                            if (edit == true) {
+                                userdata.Cur_Site.value = site
+                                navController.navigate("games_list/${selectedSite.site_ID}")
+                            } else {
+                                userdata.Cur_Site.value = site
+                                val session_Ref = database.getReference("sessions")
+                                    .child(userdata.Session_ID.value.toString())
+                                session_Ref.child("stid").setValue(site.site_ID)
+                                navController.navigate("games_list/${selectedSite.site_ID}") {
+                                    popUpTo("info") { inclusive = false }
+                                    launchSingleTop = true
+                                }
                             }
-                        }
-                    })
+                        },
+                        edit = edit,
+                        navController = navController,
+                        userdata = userdata
+                    )
                     Log.i("SitesList", "Displaying Site")
                     Divider()
                 }
@@ -255,7 +275,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
 }
 
 @Composable
-private fun SiteListItem(site: site, onItemclick: (site) -> Unit) {
+private fun SiteListItem(site: site, onItemclick: (site) -> Unit, edit: Boolean, navController: NavController, userdata: AppData) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -263,12 +283,98 @@ private fun SiteListItem(site: site, onItemclick: (site) -> Unit) {
             .clickable{onItemclick(site)}
 
     ) {
-        Text(
-            text = "Site: ${site.name}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Site: ${site.name}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if(edit == true){
+                SiteDropdown(
+                    site,
+                    onSiteEditClick = {
+                        userdata.Cur_Site.value = site
+                        navController.navigate("games_designer/${"Site"}")}
+                )
+            }
+        }
+
+
+    }
+}
+
+@Composable
+private fun SiteDropdown(site: site, onSiteEditClick: (site) -> Unit){
+    var expanded by remember { mutableStateOf(false) }
+    var showAddUserDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    val database = FirebaseDatabase.getInstance()
+    val databaseRef = database.getReference("sites")
+
+    Box(modifier = Modifier.padding(16.dp))
+    {
+        IconButton(onClick = { expanded = !expanded }) {
+            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Edit") },
+                onClick = {
+                    onSiteEditClick(site)
+                    expanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text("Delete") },
+                onClick = {
+                    showDeleteDialog = true
+                    expanded = false
+                }
+            )
+
+            DropdownMenuItem(
+                text = { Text("Add User") },
+                onClick = {
+                    showAddUserDialog = true
+                    expanded = false
+                }
+            )
+        }
+    }
+    //add another user dialog
+    if(showAddUserDialog) {
+        TextinputDialog(
+            onInputSubmitted = { newUser ->
+                site.users_IDs.add(newUser)
+                databaseRef.child(site.site_ID).setValue(site)
+                showAddUserDialog = false
+            },
+            "User ID"
         )
     }
+    //delete site dialog
+    if(showDeleteDialog){
+        areyoursureDialog(
+            OnConfirm = {
+                databaseRef.child(site.site_ID).removeValue()
+                showDeleteDialog = false
+            },
+            OnDismiss = {
+                showDeleteDialog = false
+            },
+            Message = "Are You sure you want to delete?"
+        )
+    }
+
 }
 
 @Composable
@@ -344,17 +450,22 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                     .padding(16.dp)
             ) {
                 items(games.value) { game ->
-                    GameListItem(game, onItemclick = { selectedGame ->
-                        if (edit == true){
-                            userdata.Cur_Game.value = game
-                            navController.navigate("games_designer")
-                        } else {
-                            userdata.Cur_Game.value = game
-                            val session_Ref = database.getReference("sessions").child(userdata.Session_ID.value.toString())
-                            session_Ref.child("gid").setValue(game.gid)
-                            navController.navigate("map")
-                        }
-                    })
+                    GameListItem(
+                        game, onItemclick = { selectedGame ->
+                            if (edit == true) {
+                                userdata.Cur_Game.value = game
+                                navController.navigate("games_designer/${"Game"}")
+                            } else {
+                                userdata.Cur_Game.value = game
+                                val session_Ref = database.getReference("sessions")
+                                    .child(userdata.Session_ID.value.toString())
+                                session_Ref.child("gid").setValue(game.gid)
+                                navController.navigate("map")
+                            }
+                        },
+                        onDeleteclick = { game -> databaseRef.child(game.gid).removeValue()},
+                        edit = edit
+                    )
                     Log.i("GameList", "Displaying Site")
                     Divider()
                 }
@@ -375,17 +486,46 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     }
 }
 @Composable
-private fun GameListItem(game: game, onItemclick: (game) -> Unit) {
+private fun GameListItem(game: game, onItemclick: (game) -> Unit, onDeleteclick: (game) -> Unit, edit: Boolean = false) {
+    var DeleteDialog by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
             .clickable{onItemclick(game)}
     ) {
-        Text(
-            text = "Game: ${game.name}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Game: ${game.name}",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            if (edit == true){
+                IconButton(onClick = {DeleteDialog = true}) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if(DeleteDialog == true){
+        areyoursureDialog(
+            OnConfirm = {DeleteDialog = false
+                        onDeleteclick(game)},
+            OnDismiss = {DeleteDialog = false},
+            Message = "Are you sure you want to delete game: ${game.name}"
         )
     }
 }
@@ -605,6 +745,8 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
     val unselectedColor = Color.LightGray
     val backgroundColor = Color.Gray
     var expanded by remember { mutableStateOf(false) }
+    var PingDialog by remember { mutableStateOf(false) }
+    var UrgentPingDialog by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -701,14 +843,14 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                     DropdownMenuItem(
                         text = { Text("Request Help") },
                         onClick = {
-                            pingclick()
+                            PingDialog = true
                             expanded = false
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("SOS") },
                         onClick = {
-                            urgentpingclick()
+                            UrgentPingDialog = true
                             expanded = false
                         }
                     )
@@ -721,6 +863,22 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
             titleContentColor = Color.White
         )
     )
+    if (PingDialog == true){
+        areyoursureDialog(
+            OnConfirm = {pingclick()
+                PingDialog =false},
+            OnDismiss = {PingDialog =false},
+            Message = "Are you sure you want to ping the marshal?"
+        )
+    }
+    if (UrgentPingDialog == true){
+        areyoursureDialog(
+            OnConfirm = {urgentpingclick()
+                UrgentPingDialog =false},
+            OnDismiss = {UrgentPingDialog =false},
+            Message = "Are you sure you want to call an Emergency?"
+        )
+    }
 }
 
 @Composable

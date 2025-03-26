@@ -150,8 +150,14 @@ class landing_page : ComponentActivity() {
             ) { backStackEntry ->
                 games_list(navController, userdata, true)
             }
-            composable("games_designer") {
-                Editor(navController, userdata)
+            composable(
+                route = "games_designer/{mode}",
+                arguments = listOf(navArgument("mode") {
+                    type = NavType.StringType
+                })
+            ){ backStackEntry ->
+                val mode = backStackEntry.arguments?.getString("mode") ?: "default"
+                Editor(navController, userdata,mode)
             }
         }
     }
@@ -387,12 +393,11 @@ class landing_page : ComponentActivity() {
     }
 
     @Composable
-    private fun Editor(navController: NavController, userdata: AppData) {
+    private fun Editor(navController: NavController, userdata: AppData, mode: String = "Game") {
         val context = LocalContext.current
         val database = FirebaseDatabase.getInstance()
         var mapView = remember { MapView(context) }
         var selectedPoint: GeoPointData? = null
-        var Markers: MutableList<MapObject> = userdata.Cur_Game.value?.markers ?: return
         var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
         var showBrief by remember { mutableStateOf(false) }
         var showMarkerEdit by remember { mutableStateOf(false) }
@@ -405,27 +410,56 @@ class landing_page : ComponentActivity() {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
 
+        var Markers: MutableList<MapObject>
+
+        if (mode == "Game"){
+            Markers = userdata.Cur_Game.value?.markers ?: return
+        }else if(mode == "Site"){
+            Markers = userdata.Cur_Site.value?.markers ?: return
+
+        }else{ //base case
+            Markers = userdata.Cur_Game.value?.markers ?: return
+        }
+
         fun saveandexit() {
             val site = userdata.Cur_Site.value
             val game = userdata.Cur_Game.value
 
-            if (site != null && game != null) {
-                userdata.Cur_Game.value?.markers = Markers
+            if (site != null && (game != null || mode == "Site")) {
+                if (mode == "Game") {
+                    userdata.Cur_Game.value?.markers = Markers
 
-                val Ref = database.getReference("sites")
-                Ref.child(site.site_ID)
-                    .child("games")
-                    .child(game.gid)
-                    .child("markers")
-                    .setValue(Markers)
-                    .addOnSuccessListener {
-                        Log.d("SaveAndExit", "Markers saved successfully")
-                        navController.navigateUp()
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("SaveAndExit", "Failed to save markers", exception)
-                        navController.navigateUp()
-                    }
+                    val Ref = database.getReference("sites")
+                    Ref.child(site.site_ID)
+                        .child("games")
+                        .child(game?.gid ?: return)
+                        .child("markers")
+                        .setValue(Markers)
+                        .addOnSuccessListener {
+                            Log.d("SaveAndExit", "Markers saved successfully")
+                            navController.navigateUp()
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("SaveAndExit", "Failed to save markers", exception)
+                            navController.navigateUp()
+                        }
+                } else if (mode == "Site") {
+                    userdata.Cur_Site.value?.markers = Markers
+
+                    val Ref = database.getReference("sites")
+                    Ref.child(site.site_ID)
+                        .child("markers")
+                        .setValue(Markers)
+                        .addOnSuccessListener {
+                            Log.d("SaveAndExit", "Markers saved successfully")
+                            navController.navigateUp()
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("SaveAndExit", "Failed to save markers", exception)
+                            navController.navigateUp()
+                        }
+                }
+
             } else {
 
                 Log.e("SaveAndExit", "Cannot save: Site or Game is null")
@@ -474,21 +508,38 @@ class landing_page : ComponentActivity() {
 
             val pullRef = database.getReference("sites")
 
+            if (mode == "Game"){
+                pullRef.child(SID.toString()).child("games").child(GID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val loadedMarkers = snapshot.children.mapNotNull { child ->
+                            child.getValue(MapObject::class.java)
+                        }.toMutableList()
 
-            pullRef.child(SID.toString()).child("games").child(GID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val loadedMarkers = snapshot.children.mapNotNull { child ->
-                        child.getValue(MapObject::class.java)
-                    }.toMutableList()
+                        Markers = loadedMarkers
+                        userdata.Cur_Game.value?.markers = loadedMarkers
+                    }
 
-                    Markers = loadedMarkers
-                    userdata.Cur_Game.value?.markers = loadedMarkers
-                }
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("Editor", "Error loading markers: ${error.message}")
+                    }
+                })
+            }else{
+                pullRef.child(SID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val loadedMarkers = snapshot.children.mapNotNull { child ->
+                            child.getValue(MapObject::class.java)
+                        }.toMutableList()
 
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("Editor", "Error loading markers: ${error.message}")
-                }
-            })
+                        Markers = loadedMarkers
+                        userdata.Cur_Site.value?.markers = loadedMarkers
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        Log.e("Editor", "Error loading markers: ${error.message}")
+                    }
+                })
+            }
+
             getCurLocation()
         }
 
@@ -632,28 +683,50 @@ class landing_page : ComponentActivity() {
 
 
                     if (showBrief == true) {
-                        twotextinputDialog(
-                            userdata.Cur_Game.value?.name ?: return@Box,
-                            userdata.Cur_Game.value?.desc ?: return@Box,
-                            onDismiss = { showBrief = false },
-                            onConfirm = { title, desc ->
-                                val Ref = database.getReference("sites")
-                                Ref.child(userdata.Cur_Site.value?.site_ID.toString())
-                                    .child("games")
-                                    .child(userdata.Cur_Game.value?.gid.toString()).child("name")
-                                    .setValue(title).addOnSuccessListener {
-                                        userdata.Cur_Game.value?.name = title
-                                    }
-                                Ref.child(userdata.Cur_Site.value?.site_ID.toString())
-                                    .child("games")
-                                    .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
-                                    .setValue(desc).addOnSuccessListener {
-                                        userdata.Cur_Game.value?.desc = desc
-                                    }
-                                showBrief = false
+                        if(mode == "Game"){
+                            twotextinputDialog(
+                                userdata.Cur_Game.value?.name ?: return@Box,
+                                userdata.Cur_Game.value?.desc ?: return@Box,
+                                onDismiss = { showBrief = false },
+                                onConfirm = { title, desc ->
+                                    val Ref = database.getReference("sites")
+                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                        .child("games")
+                                        .child(userdata.Cur_Game.value?.gid.toString()).child("name")
+                                        .setValue(title).addOnSuccessListener {
+                                            userdata.Cur_Game.value?.name = title
+                                        }
+                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                        .child("games")
+                                        .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
+                                        .setValue(desc).addOnSuccessListener {
+                                            userdata.Cur_Game.value?.desc = desc
+                                        }
+                                    showBrief = false
 
-                            }
-                        )
+                                }
+                            )
+                        }else{
+                            twotextinputDialog(
+                                userdata.Cur_Site.value?.name ?: return@Box,
+                                userdata.Cur_Site.value?.brief ?: return@Box,
+                                onDismiss = { showBrief = false },
+                                onConfirm = { title, desc ->
+                                    val Ref = database.getReference("sites")
+                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                        .child("name")
+                                        .setValue(title).addOnSuccessListener {
+                                            userdata.Cur_Game.value?.name = title
+                                        }
+                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                        .child("brief")
+                                        .setValue(desc).addOnSuccessListener {
+                                            userdata.Cur_Game.value?.desc = desc
+                                        }
+                                    showBrief = false
+                                }
+                            )
+                        }
                     }
 
 
