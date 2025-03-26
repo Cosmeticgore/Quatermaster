@@ -543,6 +543,14 @@ class MainActivity : ComponentActivity() {
                                         .verticalScroll(scrollState)
                                         .fillMaxWidth()
                                 )
+                                Divider()
+                                Text(
+                                    text = "${userdata.Cur_Site.value?.brief}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .verticalScroll(scrollState)
+                                        .fillMaxWidth()
+                                )
                             }
 
 

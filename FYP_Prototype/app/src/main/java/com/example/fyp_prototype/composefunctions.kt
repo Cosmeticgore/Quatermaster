@@ -235,6 +235,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                         site, onItemclick = { selectedSite ->
                             if (edit == true) {
                                 userdata.Cur_Site.value = site
+                                userdata.Cur_Game.value = null
                                 navController.navigate("games_list/${selectedSite.site_ID}")
                             } else {
                                 userdata.Cur_Site.value = site
