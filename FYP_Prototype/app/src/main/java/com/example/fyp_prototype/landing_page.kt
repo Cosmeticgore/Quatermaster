@@ -1,6 +1,7 @@
 package com.example.fyp_prototype
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -83,6 +84,12 @@ import androidx.compose.runtime.DisposableEffect
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
+import org.osmdroid.api.IGeoPoint
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.views.overlay.compass.CompassOverlay
+import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import kotlin.math.log
 
 import kotlin.random.Random
@@ -401,7 +408,6 @@ class landing_page : ComponentActivity() {
         val database = FirebaseDatabase.getInstance()
         var mapView = remember { MapView(context) }
         var selectedPoint: GeoPointData? = null
-        var initialLocation: GeoPoint = GeoPoint(48.8584, 2.2945)
         var showBrief by remember { mutableStateOf(false) }
         var showMarkerEdit by remember { mutableStateOf(false) }
         var showPolyEdit by remember { mutableStateOf(false) }
@@ -414,6 +420,17 @@ class landing_page : ComponentActivity() {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
         var type by remember { mutableStateOf(0) }
+
+        Intent(applicationContext, LocationService::class.java).apply {
+            action = LocationService.ACTION_START
+            startService(this)
+        }
+
+        val compassOverlay = remember {
+            CompassOverlay(context, InternalCompassOrientationProvider(context), mapView).apply {
+                enableCompass()
+            }
+        }
 
         var Markers: MutableList<MapObject>
 
@@ -478,20 +495,22 @@ class landing_page : ComponentActivity() {
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null)
-                    .addOnSuccessListener { location: Location? ->
-                        location?.let {
-                            val geoPoint = GeoPoint(it.latitude, it.longitude)
-                            currentLocation = geoPoint
+                fusedLocationClient.flushLocations().addOnSuccessListener{
+                    fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null)
+                        .addOnSuccessListener { location: Location? ->
+                            location?.let {
+                                val geoPoint = GeoPoint(it.latitude, it.longitude)
+                                currentLocation = geoPoint
 
-                            mapView.controller.setCenter(geoPoint)
-                            mapView.controller.setZoom(18.0)
-                            mapView.invalidate()
+                                mapView.controller.setCenter(geoPoint)
+                                mapView.controller.setZoom(20.0)
+                                mapView.invalidate()
+                            }
                         }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("Location", "Error getting location", e)
-                    }
+                        .addOnFailureListener { e ->
+                            Log.e("Location", "Error getting location", e)
+                        }
+                }
             }
         }
 
@@ -506,11 +525,6 @@ class landing_page : ComponentActivity() {
             Configuration.getInstance()
                 .load(context, PreferenceManager.getDefaultSharedPreferences(context))
             Configuration.getInstance().userAgentValue = "AirsoftAPP"
-
-            mapView.setMultiTouchControls(true)
-            mapView.controller.setZoom(15.0)
-            mapView.controller.setCenter(initialLocation)
-
             val pullRef = database.getReference("sites")
 
             if (mode == "Game"){
@@ -544,7 +558,6 @@ class landing_page : ComponentActivity() {
                     }
                 })
             }
-
             getCurLocation()
         }
 
@@ -560,13 +573,22 @@ class landing_page : ComponentActivity() {
         }) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 AndroidView(// map view
-                    factory = { mapView },
                     modifier = Modifier.fillMaxSize(),
+                    factory = { mapView.apply {
+                        setTileSource(TileSourceFactory.MAPNIK)
+                        minZoomLevel = 17.0
+                        maxZoomLevel = 20.0
+                        controller.setZoom(18.0)
+                        setBuiltInZoomControls(true)
+                        setMultiTouchControls(true)
+                        overlays.add(compassOverlay)
+                    } },
                     update = { mapView ->
                         mapView.overlays.clear()
                         Markers.forEach { marker ->
                             marker.draw(mapView, true)
                         }
+                        mapView.overlays.add(compassOverlay)
                         mapView.invalidate()
                     }
                 )

@@ -92,7 +92,6 @@ import androidx.compose.material3.AlertDialog
 
 
 class MainActivity : ComponentActivity() {
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private val database = Firebase.database
     private val databaseRef = database.getReference("sessions")
     private val scope = CoroutineScope(Dispatchers.Main + Job())
@@ -120,10 +119,12 @@ class MainActivity : ComponentActivity() {
             location = locat(0.0, 0.0),
             role = role.toString()
         )
+
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_START
             startService(this)
         }
+
         FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
                 Log.w("Token Creation", "Fetching FCM registration token failed", task.exception)
@@ -141,6 +142,7 @@ class MainActivity : ComponentActivity() {
                 }
 
         })
+
         changeteam(userdata, this)
 
         //UI
