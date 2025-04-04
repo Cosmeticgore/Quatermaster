@@ -1,23 +1,19 @@
 package com.example.fyp_prototype
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import android.location.LocationRequest
-import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,21 +23,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,11 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -79,19 +67,14 @@ import com.google.firebase.messaging.FirebaseMessaging
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.modifier.modifierLocalMapOf
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
-import org.osmdroid.api.IGeoPoint
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import kotlin.math.log
-
 import kotlin.random.Random
 
 //This is the Landing page, users start here when the app is opened
@@ -174,6 +157,7 @@ class landing_page : ComponentActivity() {
 
 
     // this is the join session button, it has the logic for joining a session inside it
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun Join_session(userdata: AppData) {
         var code_input by remember { mutableStateOf("") }
@@ -183,70 +167,11 @@ class landing_page : ComponentActivity() {
         val modifier = Modifier
             .padding(16.dp)
             .fillMaxWidth()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = modifier
+
+        Column(
+            modifier = modifier,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button( // code submission
-                onClick = {
-                    if (code_input.length == 6) {
-
-                        databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
-
-                            val newUser = user( //create a new user
-                                userId = userdata.user_ID.value.toString(),
-                                username = userdata.Username.value.toString()
-                            )
-
-                            if (snapshot.exists()) {
-                                databaseRef.child(code_input).child("users").child(newUser.userId)
-                                    .setValue(newUser).addOnSuccessListener {
-                                        val Intent = Intent(
-                                            context,
-                                            MainActivity::class.java
-                                        ).apply { // pass values to the main activity
-                                            userdata.updateAppData(
-                                                newUser.userId,
-                                                code_input,
-                                                "Player",
-                                                userdata.Team.value.toString(),
-                                                userdata.Status.value.toString()
-                                            )
-                                        }
-                                        context.startActivity(Intent) // move to main
-                                    }.addOnFailureListener { e -> // error handling
-                                        val err_toast = Toast.makeText(
-                                            context,
-                                            "Failed to Join Session - Connection Issue",
-                                            Toast.LENGTH_SHORT
-                                        )
-                                        err_toast.show()
-                                    }
-                            } else {
-                                val err_toast = Toast.makeText(
-                                    context,
-                                    "Failed to Join Session - Code Invalid",
-                                    Toast.LENGTH_SHORT
-                                )
-                                err_toast.show()
-                            }
-                        }
-                    } else {
-                        val err_toast =
-                            Toast.makeText(
-                                context,
-                                "Code must be 6 digits long",
-                                Toast.LENGTH_SHORT
-                            )
-                        err_toast.show()
-                    }
-
-                }
-            ) {
-                Text("Join Session")
-            }
-
             OutlinedTextField( // code input field
                 value = code_input,
                 onValueChange = {
@@ -257,10 +182,66 @@ class landing_page : ComponentActivity() {
                 label = { Text("Enter 6-digit code") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
-                modifier = modifier
+                modifier = modifier.padding(4.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    containerColor = androidx.compose.ui.graphics.Color.White,
+                ),
             )
-        }
+            button_common("Join Session", onClick = {
+                if (code_input.length == 6) {
 
+                    databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
+
+                        val newUser = user( //create a new user
+                            userId = userdata.user_ID.value.toString(),
+                            username = userdata.Username.value.toString()
+                        )
+
+                        if (snapshot.exists()) {
+                            databaseRef.child(code_input).child("users").child(newUser.userId)
+                                .setValue(newUser).addOnSuccessListener {
+                                    val Intent = Intent(
+                                        context,
+                                        MainActivity::class.java
+                                    ).apply { // pass values to the main activity
+                                        userdata.updateAppData(
+                                            newUser.userId,
+                                            code_input,
+                                            "Player",
+                                            userdata.Team.value.toString(),
+                                            userdata.Status.value.toString()
+                                        )
+                                    }
+                                    context.startActivity(Intent) // move to main
+                                }.addOnFailureListener { e -> // error handling
+                                    val err_toast = Toast.makeText(
+                                        context,
+                                        "Failed to Join Session - Connection Issue",
+                                        Toast.LENGTH_SHORT
+                                    )
+                                    err_toast.show()
+                                }
+                        } else {
+                            val err_toast = Toast.makeText(
+                                context,
+                                "Failed to Join Session - Code Invalid",
+                                Toast.LENGTH_SHORT
+                            )
+                            err_toast.show()
+                        }
+                    }
+                } else {
+                    val err_toast =
+                        Toast.makeText(
+                            context,
+                            "Code must be 6 digits long",
+                            Toast.LENGTH_SHORT
+                        )
+                    err_toast.show()
+                }
+
+            } )
+        }
     }
 
     // this is the create session button, has all the logic inside
@@ -269,12 +250,14 @@ class landing_page : ComponentActivity() {
         val database = Firebase.database
         val databaseRef = database.getReference("sessions")
         val context = LocalContext.current
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
         ) {
-            Button(
+            button_common("Create Session",
                 onClick = {
                     val id = Random.nextInt(100000, 999999).toString() //generates a session ID
                     val newUser = user( //creates a new user
@@ -322,9 +305,7 @@ class landing_page : ComponentActivity() {
                             err_toast.show()
                         }
                 }
-            ) {
-                Text("Create Session")
-            }
+            )
         }
     }
 
@@ -383,21 +364,30 @@ class landing_page : ComponentActivity() {
                         onUserclick = { showUserDialog = true}
 
                     )
-                    Join_session(userdata)
-                    Spacer(Modifier.height(32.dp))
-                    Create_session(userdata)
-                    Spacer(Modifier.height(32.dp))
-                    if (showUserDialog == true){
-                        AlertDialog(
-                            onDismissRequest = { showUserDialog = false },
-                            title = { Text("User ID:") },
-                            text = { Text(userdata.user_ID.value.toString()) },
-                            confirmButton = {},
-                            dismissButton = { TextButton(onClick = { showUserDialog = false }) { Text("Close") } }
-                        )
+                    Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
+                        .background(androidx.compose.ui.graphics.Color.Gray)
+                        .padding(16.dp)
+                    )
+                    {
+                        Join_session(userdata)
+                        Spacer(Modifier.height(32.dp))
+                        Create_session(userdata)
+                        Spacer(Modifier.height(32.dp))
+                        if (showUserDialog == true) {
+                            AlertDialog(
+                                onDismissRequest = { showUserDialog = false },
+                                title = { Text("User ID:") },
+                                text = { Text(userdata.user_ID.value.toString()) },
+                                confirmButton = {},
+                                dismissButton = {
+                                    TextButton(onClick = {
+                                        showUserDialog = false
+                                    }) { Text("Close") }
+                                }
+                            )
+                        }
                     }
                 }
-
             }
         }
     }
@@ -608,15 +598,13 @@ class landing_page : ComponentActivity() {
                 ) {
                     Column {
                         if (shownedit == "Marker") {
-                            Button(
+                            button_common("Add Marker",
                                 onClick = {
                                     showMarkerEdit = true
                                 }
-                            ) {
-                                Text("Add Marker")
-                            }
+                            )
                         } else if (shownedit == "Line") {
-                                Button(
+                            button_common("Add Point",
                                     onClick = {
                                         val centerIGeoPoint = mapView.mapCenter
                                         if (centerIGeoPoint != null) {
@@ -627,20 +615,16 @@ class landing_page : ComponentActivity() {
                                             linePoints.add(centerPoint)
                                         }
                                     }
-                                ) {
-                                    Text("Add Point")
-                                }
+                                )
 
-                                Button(
+                            button_common("Finish Line",
                                     onClick = {
                                         type = 1
                                         showPolyEdit = true
                                     }
-                                ) {
-                                    Text("Finish Line")
-                                }
+                                )
                         } else {
-                                Button(
+                                button_common("Add Point",
                                     onClick = {
                                         val centerIGeoPoint = mapView.mapCenter
                                         if (centerIGeoPoint != null) {
@@ -652,20 +636,16 @@ class landing_page : ComponentActivity() {
                                         }
 
                                     }
-                                ) {
-                                    Text("Add Point")
-                                }
+                                )
 
-                                Button(
+                                button_common("Finish Polygon",
                                     onClick = {
                                         type = 2
                                         showPolyEdit = true
                                     }
-                                ) {
-                                    Text("Finish Polygon")
-                                }
+                                )
                         }
-                        Button(
+                        button_common("Undo",
                             onClick = {
                                 if (!Markers.isEmpty()){
                                     Markers.removeAt(Markers.lastIndex)
@@ -673,17 +653,12 @@ class landing_page : ComponentActivity() {
                                 markersVersion++
                                 mapView.invalidate()
                             }
-                        ){
-                            Text("Undo")
-                        }
-
-                        Button(
+                        )
+                        button_common("My Location",
                             onClick = {
                                 getCurLocation()
                             }
-                        ){
-                            Text("My Location")
-                        }
+                        )
                     }
 
 

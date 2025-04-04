@@ -27,9 +27,11 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -1057,7 +1059,8 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
             containerColor = Color.Gray, // Ensure grey background for the entire TopAppBar
             titleContentColor = Color.White,
             navigationIconContentColor = Color.White
-        )
+        ),
+
 
     )
 
@@ -1134,4 +1137,18 @@ fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit
     )
 }
 
-
+@Composable
+fun button_common(String: String, onClick: () -> Unit){
+    ElevatedButton(
+        onClick = {onClick()},
+        modifier = Modifier
+            .padding(4.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Color.Green,
+                contentColor = Color.Black
+            )
+            )
+        {
+        Text(String)
+    }
+}
