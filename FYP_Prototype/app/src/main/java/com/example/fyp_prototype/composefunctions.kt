@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -877,6 +878,9 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
     var expanded by remember { mutableStateOf(false) }
     var PingDialog by remember { mutableStateOf(false) }
     var UrgentPingDialog by remember { mutableStateOf(false) }
+
+    val configuration = LocalConfiguration.current
+    val Landscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     TopAppBar(
         title = {

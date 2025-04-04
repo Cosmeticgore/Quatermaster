@@ -189,8 +189,9 @@ class MainActivity : ComponentActivity() {
             })
     }
 
+    // non-urgent ping
     fun ping(sessionId: String): Task<String> {
-        val data = hashMapOf(
+        val data = hashMapOf( //construct message
             "sessionId" to sessionId,
             "title" to "Player Needs Help",
             "message" to "Non Urgent Help wanted"
@@ -198,12 +199,12 @@ class MainActivity : ComponentActivity() {
 
         Log.d("FCM_CALL", "Sending data: $data")
 
-        userdata.update_status("Help_Needed")
+        userdata.update_status("Help_Needed") //update status on userdata and database
 
-        return functions.getHttpsCallable("sendAdminNotifications")
+        return functions.getHttpsCallable("sendAdminNotifications") //send a https request to Cloud Function
             .call(data)
             .continueWith { task ->
-                if (task.isSuccessful) {
+                if (task.isSuccessful) { // when task is successful log it
                     val result = task.result?.data
                     Log.d("FCM_CALL", "Success: $result")
                     "Success: Notification sent"
@@ -215,8 +216,9 @@ class MainActivity : ComponentActivity() {
             }
     }
 
+    // urgent ping - if this is called someone is in danger
     fun urgentping(sessionId: String): Task<String> {
-        val data = hashMapOf(
+        val data = hashMapOf( //construct message
             "sessionId" to sessionId,
             "title" to "Player is in Danger!",
             "message" to "Player is in urgent need of help!"
@@ -224,12 +226,12 @@ class MainActivity : ComponentActivity() {
 
         Log.d("FCM_CALL", "Sending data: $data")
 
-        userdata.update_status("Critical")
+        userdata.update_status("Critical")//update usedata and database
 
-        return functions.getHttpsCallable("sendAdminNotifications")
+        return functions.getHttpsCallable("sendAdminNotifications") //send a https request to cloud function
             .call(data)
             .continueWith { task ->
-                if (task.isSuccessful) {
+                if (task.isSuccessful) { // when task is successful log it
                     val result = task.result?.data
                     Log.d("FCM_CALL", "Success: $result")
                     "Success: Notification sent"
@@ -244,55 +246,52 @@ class MainActivity : ComponentActivity() {
     // marks a user on the map
     private fun updatemarker(mapView: MapView, user: user) {
         val marker = userMarkers.getOrPut(user.userId) {
-            Marker(mapView).apply {
-                val teamMarkers = when (user.team) {
+            Marker(mapView).apply { // create map marker for each user
+                val teamMarkers = when (user.team) { // set user colour
                     "Red" -> R.drawable.redplayermarker
                     "Blue" -> R.drawable.blueplayermarker
                     else -> R.drawable.greenplayermarker
                 }
-
-                val customMarker = ContextCompat.getDrawable(mapView.context,teamMarkers)
-
-                customMarker?.let {
+                val playerMarker = ContextCompat.getDrawable(mapView.context,teamMarkers) //create player marker
+                playerMarker?.let {
                     it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
                     icon = it
                 }
-
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                mapView.overlays.add(this)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER) //set marker to draw with centre on centre
+                mapView.overlays.add(this) // add to map
             }
         }
 
-        if (user.status != "Nominal") {
+        if (user.status != "Nominal") { // if user is not ok
 
             val helpkey = "${user.userId}_help"
             val helpmarker = userMarkers.getOrPut(helpkey) {
-                Marker(mapView).apply {
+                Marker(mapView).apply { // set warn marker icon
                     val warnMarkers = when (user.status) {
                         "Help_Needed" -> R.drawable.help
                         "Critical" -> R.drawable.emergency
                         else -> R.drawable.help
                     }
-
-                    val customMarker = ContextCompat.getDrawable(mapView.context,warnMarkers)
-
-                    customMarker?.let {
+                    val warnMarker = ContextCompat.getDrawable(mapView.context,warnMarkers) //create warn marker
+                    warnMarker?.let {
                         it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
                         icon = it
                     }
 
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    mapView.overlays.add(this)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM) // set marker to draw bottom on centre
+                    mapView.overlays.add(this) // add to map
                 }
             }
 
+            //tooltip for emergency marker
             helpmarker.position = GeoPoint(user.location.latitude, user.location.longitude)
-            helpmarker.title = "User: ${user.userId}"
+            helpmarker.title = "User: ${user.username}"
             helpmarker.snippet = "Team: ${user.team}\nRole: ${user.role}"
         }
 
+        //tooltip for player marker
         marker.position = GeoPoint(user.location.latitude, user.location.longitude)
-        marker.title = "User: ${user.userId}"
+        marker.title = "User: ${user.username}"
         marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
     }
 

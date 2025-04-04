@@ -13,7 +13,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,9 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -71,7 +68,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.modifier.modifierLocalMapOf
+import androidx.compose.ui.platform.LocalConfiguration
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -124,22 +121,19 @@ class landing_page : ComponentActivity() {
 
 
     @Composable
-    private fun App(userdata: AppData) {
+    private fun App(userdata: AppData) { //nav map for the landing page
         val navController = rememberNavController()
 
-        NavHost(navController = navController, startDestination = "join_create") {
+        NavHost(navController = navController, startDestination = "join_create") { //start on join create page
             composable("join_create") {
                 join_create(userdata, navController)
             }
-            composable("sites") {
+            composable("sites") { //sites list
                 site_view_screen(navController, userdata, true)
             }
-            composable("stats") {
-
-            }
-            composable(
+            composable( // games list
                 route = "games_list/{Site_ID}",
-                arguments = listOf(navArgument("Site_ID") {
+                arguments = listOf(navArgument("Site_ID") { //pass the id if its in edit mode
                     type = NavType.StringType
                 })
             ) { backStackEntry ->
@@ -147,7 +141,7 @@ class landing_page : ComponentActivity() {
             }
             composable(
                 route = "games_designer/{mode}",
-                arguments = listOf(navArgument("mode") {
+                arguments = listOf(navArgument("mode") { //pass the mode of the game designer either Game or Site
                     type = NavType.StringType
                 })
             ){ backStackEntry ->
@@ -314,21 +308,26 @@ class landing_page : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun join_create(userdata: AppData, navController: NavController) {
-        userdata.reset_data()
+        userdata.reset_data() // reset the stored user data
         val context = LocalContext.current
+
+        // get the username and UID from the shared preferences
         val sharedPref =
             context.getSharedPreferences("Quatermaster.storedData", MODE_PRIVATE)
-
         val username =
             remember { mutableStateOf(sharedPref.getString("Quatermaster.key.username", "") ?: "") }
         val UID =
             remember { mutableStateOf(sharedPref.getString("Quatermaster.key.UID", "") ?: "") }
 
+        val configuration = LocalConfiguration.current
+        val Landscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+
         val UIDset = remember { mutableStateOf(UID.value.isEmpty()) }
         var showDialog = remember { mutableStateOf(username.value.isEmpty()) }
         var showUserDialog by remember { mutableStateOf(false) }
 
-        if (UIDset.value) {
+        if (UIDset.value) { // if the UID isnt set create a new one otherwise use the old one
             val newUID = "user_${System.currentTimeMillis()}"
             sharedPref.edit().putString("Quatermaster.key.UID", newUID).apply()
             userdata.user_ID.value = newUID
@@ -336,6 +335,7 @@ class landing_page : ComponentActivity() {
             userdata.user_ID.value = UID.value
         }
 
+        // Set username dialog
         if (showDialog.value) {
             TextinputDialog(
                 onInputSubmitted = { newUsername ->
@@ -346,55 +346,94 @@ class landing_page : ComponentActivity() {
                 },
                 "Callsign"
             )
-        } else {
+        } else { // if username is set, set it in userdata
             userdata.Username.value = username.value
         }
-
-
+        //UI
         FYP_PrototypeTheme {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column( // make sure the all the buttons stay in the middle
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    infotopbar(
-                        onUsernameClick = { showDialog.value = true },
-                        onSiteClick = { navController.navigate("sites") },
-                        onUserclick = { showUserDialog = true}
-                    )
-                    Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
-                        .background(androidx.compose.ui.graphics.Color.Gray)
-                        .padding(16.dp)
-                    )
-                    {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo2),
-                            contentDescription = "logo",
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .size(220.dp)
-                                .padding(bottom = 16.dp)
-                        )
+            if (Landscape){
 
-                        Join_session(userdata)
-                        Spacer(Modifier.height(32.dp))
-                        Create_session(userdata)
-                        Spacer(Modifier.height(32.dp))
-                        if (showUserDialog == true) {
-                            AlertDialog(
-                                onDismissRequest = { showUserDialog = false },
-                                title = { Text("User ID:") },
-                                text = { Text(userdata.user_ID.value.toString()) },
-                                confirmButton = {},
-                                dismissButton = {
-                                    TextButton(onClick = {
-                                        showUserDialog = false
-                                    }) { Text("Close") }
-                                }
+                Box(// make sure everything aligns
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        infotopbar( //top nav bar
+                            onUsernameClick = { showDialog.value = true },
+                            onSiteClick = { navController.navigate("sites") },
+                            onUserclick = { showUserDialog = true}
+                        )
+                        Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
+                            .background(androidx.compose.ui.graphics.Color.Gray)
+                            .padding(16.dp)
+                        )
+                        {
+                            Join_session(userdata)
+                            if (showUserDialog == true) {
+                                AlertDialog(
+                                    onDismissRequest = { showUserDialog = false },
+                                    title = { Text("User ID:") },
+                                    text = { Text(userdata.user_ID.value.toString()) },
+                                    confirmButton = {},
+                                    dismissButton = {
+                                        TextButton(onClick = {
+                                            showUserDialog = false
+                                        }) { Text("Close") }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+            }else{
+                Box(// make sure everything aligns
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        infotopbar( //top nav bar
+                            onUsernameClick = { showDialog.value = true },
+                            onSiteClick = { navController.navigate("sites") },
+                            onUserclick = { showUserDialog = true}
+                        )
+                        Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
+                            .background(androidx.compose.ui.graphics.Color.Gray)
+                            .padding(16.dp)
+                        )
+                        {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo2),
+                                contentDescription = "logo",
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .size(220.dp)
+                                    .padding(bottom = 16.dp)
                             )
+
+                            Join_session(userdata)
+                            Spacer(Modifier.height(32.dp))
+                            Create_session(userdata)
+                            Spacer(Modifier.height(32.dp))
+                            if (showUserDialog == true) {
+                                AlertDialog(
+                                    onDismissRequest = { showUserDialog = false },
+                                    title = { Text("User ID:") },
+                                    text = { Text(userdata.user_ID.value.toString()) },
+                                    confirmButton = {},
+                                    dismissButton = {
+                                        TextButton(onClick = {
+                                            showUserDialog = false
+                                        }) { Text("Close") }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
