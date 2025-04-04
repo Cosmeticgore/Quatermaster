@@ -23,11 +23,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -362,13 +364,21 @@ class landing_page : ComponentActivity() {
                         onUsernameClick = { showDialog.value = true },
                         onSiteClick = { navController.navigate("sites") },
                         onUserclick = { showUserDialog = true}
-
                     )
                     Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
                         .background(androidx.compose.ui.graphics.Color.Gray)
                         .padding(16.dp)
                     )
                     {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo2),
+                            contentDescription = "logo",
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .size(220.dp)
+                                .padding(bottom = 16.dp)
+                        )
+
                         Join_session(userdata)
                         Spacer(Modifier.height(32.dp))
                         Create_session(userdata)

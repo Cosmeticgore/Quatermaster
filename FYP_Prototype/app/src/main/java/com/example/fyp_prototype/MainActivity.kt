@@ -730,7 +730,8 @@ class MainActivity : ComponentActivity() {
 
             DropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White)
             ) {
                 DropdownMenuItem(
                     text = { Text("Set Role") },
@@ -756,7 +757,7 @@ class MainActivity : ComponentActivity() {
                         expanded = false
                     }
                 )
-
+                /* Not Implemented correctly needs work later
                 DropdownMenuItem(
                     text = { Text("Kick Player") },
                     onClick = {
@@ -765,6 +766,7 @@ class MainActivity : ComponentActivity() {
                         expanded = false
                     }
                 )
+                */
             }
         }
 

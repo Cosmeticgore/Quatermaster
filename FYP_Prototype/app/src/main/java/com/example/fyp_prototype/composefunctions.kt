@@ -946,7 +946,8 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                     )
                 }
                 DropdownMenu(expanded = expanded,
-                    onDismissRequest = {expanded = false}) {
+                    onDismissRequest = {expanded = false},
+                    modifier = Modifier.background(Color.White)) {
                     DropdownMenuItem(
                         text = { Text("View Players") },
                         onClick = {
@@ -1017,7 +1018,7 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
     var expanded by remember { mutableStateOf(false) }
     TopAppBar(
         title = {
-            Text(text = "Join or Create a Session", color = Color.White)
+            Text(text = "Quartermaster", color = Color.White)
         },
         actions = {
             Box(){
@@ -1030,7 +1031,8 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
                 }
 
                 DropdownMenu(expanded = expanded,
-                    onDismissRequest = {expanded = false}) {
+                    onDismissRequest = {expanded = false},
+                    modifier = Modifier.background(Color.White)) {
                     DropdownMenuItem(
                         text = { Text("Set Username") },
                         onClick = {
@@ -1056,16 +1058,11 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Gray, // Ensure grey background for the entire TopAppBar
+            containerColor = Color.Gray,
             titleContentColor = Color.White,
             navigationIconContentColor = Color.White
         ),
-
-
     )
-
-
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1097,7 +1094,8 @@ fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit
             }
 
             DropdownMenu(expanded = expanded,
-                onDismissRequest = {expanded = false}) {
+                onDismissRequest = {expanded = false},
+                modifier = Modifier.background(Color.White)) {
                 DropdownMenuItem(
                     text = { Text("Marker") },
                     onClick = {
