@@ -14,6 +14,8 @@ composeBom = "2024.04.01"
 osmdroid = "6.1.16"
 playServicesLocation = "21.3.0"
 retrofit = "2.9.0"
+junitJunit = "4.12"
+testng = "6.9.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -39,6 +41,8 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 retrofit = { module = "com.squareup.retrofit:retrofit", version.ref = "retrofit" }
+junit-junit = { group = "junit", name = "junit", version.ref = "junitJunit" }
+testng = { group = "org.testng", name = "testng", version.ref = "testng" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

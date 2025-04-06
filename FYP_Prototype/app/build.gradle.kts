@@ -43,6 +43,8 @@ android {
 }
 
 dependencies {
+    testImplementation(libs.testng)
+    testImplementation(libs.junit.junit)
     val nav_version = "2.8.8"
     implementation(platform(libs.firebase.bom))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
@@ -69,4 +71,10 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.functions)
     implementation("androidx.navigation:navigation-compose:$nav_version")
+
+    //testImplementation ("junit:junit:5.10.1")
+    testImplementation ("androidx.test:core:1.5.0")
+    testImplementation ("org.mockito:mockito-core:5.10.0")
+    testImplementation ("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation ("io.mockk:mockk:1.13.10")
 }

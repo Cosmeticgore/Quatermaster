@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
+import org.osmdroid.views.overlay.Marker
 
 class AppData private constructor(application: Application) : AndroidViewModel(application){
 
@@ -27,8 +28,9 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
     val Team = MutableLiveData<String>()
     val Status = MutableLiveData<String>()
     val Username = MutableLiveData<String>()
-    var Cur_Site= MutableLiveData<site?>()
+    val Cur_Site= MutableLiveData<site?>()
     val Cur_Game= MutableLiveData<game?>()
+    val userMarkers = mutableMapOf<String, Marker>()
 
     fun updateAppData(UID: String, SID: String, role: String, team: String, status: String){
         user_ID.value = UID

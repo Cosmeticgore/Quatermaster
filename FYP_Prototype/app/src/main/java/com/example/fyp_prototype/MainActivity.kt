@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,9 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,7 +60,6 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import androidx.compose.foundation.lazy.items
@@ -95,10 +91,8 @@ class MainActivity : ComponentActivity() {
     private val database = Firebase.database
     private val databaseRef = database.getReference("sessions")
     private val scope = CoroutineScope(Dispatchers.Main + Job())
-    private val userMarkers = mutableMapOf<String, Marker>()
     private lateinit var userdata: AppData
     private val functions: FirebaseFunctions = Firebase.functions
-
 
     @SuppressLint("NewApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -153,148 +147,6 @@ class MainActivity : ComponentActivity() {
 
     //FUNCTIONS
 
-    // gets all the users in the database and marks them on the map
-    private fun updateLocations(mapView: MapView, user: user, S_ID: String) {
-        databaseRef.child(S_ID).child("users")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) { //called when data is changed
-                    for (userSnapshot in snapshot.children) {
-                        try {
-                            val userData = userSnapshot.getValue(user::class.java)
-                            if (userData != null) {
-                                if (userData.userId != user.userId && userData.team == user.team || user.role == "Admin") { //only show location if you are an admin or they are on your team
-                                    updatemarker(mapView, userData)
-                                }
-
-                                if(userData.userId == user.userId){
-                                    userdata.updateAppData(userData.userId,
-                                        userdata.Session_ID.value.toString(),
-                                        userData.role,
-                                        userData.team,
-                                        userData.status)
-                                }
-
-                            } else { //error handling
-                                Log.e("FirebaseDebug", "UserData is null")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("FirebaseDebug", "Error deserializing UserData", e)
-                        }
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "Database query failed: ${error.message}")
-                }
-            })
-    }
-
-    // non-urgent ping
-    fun ping(sessionId: String): Task<String> {
-        val data = hashMapOf( //construct message
-            "sessionId" to sessionId,
-            "title" to "Player Needs Help",
-            "message" to "Non Urgent Help wanted"
-        )
-
-        Log.d("FCM_CALL", "Sending data: $data")
-
-        userdata.update_status("Help_Needed") //update status on userdata and database
-
-        return functions.getHttpsCallable("sendAdminNotifications") //send a https request to Cloud Function
-            .call(data)
-            .continueWith { task ->
-                if (task.isSuccessful) { // when task is successful log it
-                    val result = task.result?.data
-                    Log.d("FCM_CALL", "Success: $result")
-                    "Success: Notification sent"
-                } else {
-                    val exception = task.exception
-                    Log.e("FCM_CALL", "Error: ${exception?.message}")
-                    "Error: ${exception?.message}"
-                }
-            }
-    }
-
-    // urgent ping - if this is called someone is in danger
-    fun urgentping(sessionId: String): Task<String> {
-        val data = hashMapOf( //construct message
-            "sessionId" to sessionId,
-            "title" to "Player is in Danger!",
-            "message" to "Player is in urgent need of help!"
-        )
-
-        Log.d("FCM_CALL", "Sending data: $data")
-
-        userdata.update_status("Critical")//update usedata and database
-
-        return functions.getHttpsCallable("sendAdminNotifications") //send a https request to cloud function
-            .call(data)
-            .continueWith { task ->
-                if (task.isSuccessful) { // when task is successful log it
-                    val result = task.result?.data
-                    Log.d("FCM_CALL", "Success: $result")
-                    "Success: Notification sent"
-                } else {
-                    val exception = task.exception
-                    Log.e("FCM_CALL", "Error: ${exception?.message}")
-                    "Error: ${exception?.message}"
-                }
-            }
-    }
-
-    // marks a user on the map
-    private fun updatemarker(mapView: MapView, user: user) {
-        val marker = userMarkers.getOrPut(user.userId) {
-            Marker(mapView).apply { // create map marker for each user
-                val teamMarkers = when (user.team) { // set user colour
-                    "Red" -> R.drawable.redplayermarker
-                    "Blue" -> R.drawable.blueplayermarker
-                    else -> R.drawable.greenplayermarker
-                }
-                val playerMarker = ContextCompat.getDrawable(mapView.context,teamMarkers) //create player marker
-                playerMarker?.let {
-                    it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
-                    icon = it
-                }
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER) //set marker to draw with centre on centre
-                mapView.overlays.add(this) // add to map
-            }
-        }
-
-        if (user.status != "Nominal") { // if user is not ok
-
-            val helpkey = "${user.userId}_help"
-            val helpmarker = userMarkers.getOrPut(helpkey) {
-                Marker(mapView).apply { // set warn marker icon
-                    val warnMarkers = when (user.status) {
-                        "Help_Needed" -> R.drawable.help
-                        "Critical" -> R.drawable.emergency
-                        else -> R.drawable.help
-                    }
-                    val warnMarker = ContextCompat.getDrawable(mapView.context,warnMarkers) //create warn marker
-                    warnMarker?.let {
-                        it.setBounds(0,0,it.intrinsicWidth,it.intrinsicHeight)
-                        icon = it
-                    }
-
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM) // set marker to draw bottom on centre
-                    mapView.overlays.add(this) // add to map
-                }
-            }
-
-            //tooltip for emergency marker
-            helpmarker.position = GeoPoint(user.location.latitude, user.location.longitude)
-            helpmarker.title = "User: ${user.username}"
-            helpmarker.snippet = "Team: ${user.team}\nRole: ${user.role}"
-        }
-
-        //tooltip for player marker
-        marker.position = GeoPoint(user.location.latitude, user.location.longitude)
-        marker.title = "User: ${user.username}"
-        marker.snippet = "Team: ${user.team}\nRole: ${user.role}"
-    }
-
     private fun changeteam(User: AppData, context: Context) {
 
         if (User.Team.value == "Red" || User.Team.value =="Blue" || User.Team.value == "None"){
@@ -326,6 +178,7 @@ class MainActivity : ComponentActivity() {
         val locationProvider = GpsMyLocationProvider(context)
         val mapView = remember { MapView(context) }
         val initialLocationSet = remember { mutableStateOf(false) }
+        val locMarker = LocationMarker(userdata,databaseRef)
 
         val locationOverlay = remember { // needed for location to work
             MyLocationNewOverlay(locationProvider, mapView).apply {
@@ -353,7 +206,7 @@ class MainActivity : ComponentActivity() {
                             initialLocationSet.value = true
                         }
 
-                        updateLocations(
+                        locMarker.updateLocations(
                             mapView,
                             User,
                             S_ID
@@ -371,7 +224,7 @@ class MainActivity : ComponentActivity() {
                 job.cancel()
                 locationOverlay.disableMyLocation()
                 compassOverlay.disableCompass()
-                userMarkers.clear()
+                userdata.userMarkers.clear()
             }
         }
 
@@ -430,7 +283,8 @@ class MainActivity : ComponentActivity() {
     private fun MapHome(User: user, Session_ID: String, navController: NavController) {
         var admin : Boolean
         var showDialog by remember { mutableStateOf(false) }
-        updateAppdate(userdata)
+        var pingManager = PingManager(userdata,functions)
+        updateAppdata(userdata)
         if (userdata.Role.value == "Admin"){
             admin = true
         } else{
@@ -441,8 +295,8 @@ class MainActivity : ComponentActivity() {
                 gametopbar(
                     Button1Click = { navController.navigate("info") },
                     Button2Click = {},
-                    pingclick = { ping(Session_ID) },
-                    urgentpingclick = { urgentping(Session_ID) },
+                    pingclick = { pingManager.ping(Session_ID) },
+                    urgentpingclick = { pingManager.urgentping(Session_ID) },
                     Tab = "Map",
                     navController = navController,
                     sessionClick = {showDialog = true},
@@ -478,7 +332,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun InfoScreen(navController: NavController, Session_ID: String) {
         var admin : Boolean
-        updateAppdate(userdata)
+        updateAppdata(userdata)
+        var pingManager = PingManager(userdata,functions)
         var showDialog by remember { mutableStateOf(false) }
         if (userdata.Role.value == "Admin"){
             admin = true
@@ -497,8 +352,8 @@ class MainActivity : ComponentActivity() {
                 gametopbar(
                     Button1Click = {},
                     Button2Click = {navController.navigate("map") },
-                    pingclick = { ping(Session_ID) },
-                    urgentpingclick = { urgentping(Session_ID) },
+                    pingclick = { pingManager.ping(Session_ID) },
+                    urgentpingclick = { pingManager.urgentping(Session_ID) },
                     Tab = "Info",
                     navController = navController,
                     sessionClick = {showDialog = true},
@@ -863,7 +718,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun updateAppdate(userData: AppData){
+    private fun updateAppdata(userData: AppData){
 
         val database = Firebase.database
         val sessiondatabaseRef = database.getReference("sessions")
