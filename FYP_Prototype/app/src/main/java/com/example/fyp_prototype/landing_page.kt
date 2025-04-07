@@ -81,6 +81,7 @@ import kotlin.random.Random
 class landing_page : ComponentActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     lateinit var userdata: AppData
+    var FirebaseAccess = FirebaseAccess()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -151,160 +152,6 @@ class landing_page : ComponentActivity() {
         }
     }
 
-
-    // this is the join session button, it has the logic for joining a session inside it
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    private fun Join_session(userdata: AppData) {
-        var code_input by remember { mutableStateOf("") }
-        val context = LocalContext.current
-        val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        val modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-
-        Column(
-            modifier = modifier,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            OutlinedTextField( // code input field
-                value = code_input,
-                onValueChange = {
-                    if (it.length <= 6 && it.all { char -> char.isDigit() }) {
-                        code_input = it
-                    }
-                },
-                label = { Text("Enter 6-digit code") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
-                modifier = modifier.padding(4.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    containerColor = androidx.compose.ui.graphics.Color.White,
-                ),
-            )
-            button_common("Join Session", onClick = {
-                if (code_input.length == 6) {
-
-                    databaseRef.child(code_input).get().addOnSuccessListener { snapshot ->
-
-                        val newUser = user( //create a new user
-                            userId = userdata.user_ID.value.toString(),
-                            username = userdata.Username.value.toString()
-                        )
-
-                        if (snapshot.exists()) {
-                            databaseRef.child(code_input).child("users").child(newUser.userId)
-                                .setValue(newUser).addOnSuccessListener {
-                                    val Intent = Intent(
-                                        context,
-                                        MainActivity::class.java
-                                    ).apply { // pass values to the main activity
-                                        userdata.updateAppData(
-                                            newUser.userId,
-                                            code_input,
-                                            "Player",
-                                            userdata.Team.value.toString(),
-                                            userdata.Status.value.toString()
-                                        )
-                                    }
-                                    context.startActivity(Intent) // move to main
-                                }.addOnFailureListener { e -> // error handling
-                                    val err_toast = Toast.makeText(
-                                        context,
-                                        "Failed to Join Session - Connection Issue",
-                                        Toast.LENGTH_SHORT
-                                    )
-                                    err_toast.show()
-                                }
-                        } else {
-                            val err_toast = Toast.makeText(
-                                context,
-                                "Failed to Join Session - Code Invalid",
-                                Toast.LENGTH_SHORT
-                            )
-                            err_toast.show()
-                        }
-                    }
-                } else {
-                    val err_toast =
-                        Toast.makeText(
-                            context,
-                            "Code must be 6 digits long",
-                            Toast.LENGTH_SHORT
-                        )
-                    err_toast.show()
-                }
-
-            } )
-        }
-    }
-
-    // this is the create session button, has all the logic inside
-    @Composable
-    private fun Create_session(userdata: AppData) {
-        val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        val context = LocalContext.current
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-        ) {
-            button_common("Create Session",
-                onClick = {
-                    val id = Random.nextInt(100000, 999999).toString() //generates a session ID
-                    val newUser = user( //creates a new user
-                        userId = userdata.user_ID.value.toString(),
-                        role = "Admin",
-                        username = userdata.Username.value.toString()
-                    )
-
-                    val session = session( //creates the session
-                        session_Id = id,
-                        users = mapOf(userdata.user_ID.value.toString() to newUser)
-                    )
-
-                    FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-                        if (!task.isSuccessful) {
-                            Log.w("Fetching FCM registration token failed", task.exception)
-                            return@OnCompleteListener
-                        }
-                        newUser.not_token = task.result
-                    })
-
-                    databaseRef.child(id).setValue(session) // adds that session to the database
-                        .addOnSuccessListener {
-                            val Intent = Intent(
-                                context,
-                                MainActivity::class.java
-                            ).apply { // passes values to main
-                                userdata.updateAppData(
-                                    newUser.userId,
-                                    id,
-                                    newUser.role,
-                                    userdata.Team.value.toString(),
-                                    userdata.Status.value.toString()
-                                )
-                            }
-                            context.startActivity(Intent) // move to main
-                        }
-                        .addOnFailureListener { e ->// error handling
-                            val err_toast =
-                                Toast.makeText(
-                                    context,
-                                    "Failed to Create Session",
-                                    Toast.LENGTH_SHORT
-                                )
-                            err_toast.show()
-                        }
-                }
-            )
-        }
-    }
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun join_create(userdata: AppData, navController: NavController) {
@@ -371,7 +218,21 @@ class landing_page : ComponentActivity() {
                             .padding(16.dp)
                         )
                         {
-                            Join_session(userdata)
+                            Join_session(userdata,FirebaseAccess,context, onSucc = { newUser, code_input->
+                                val Intent = Intent(
+                                    context,
+                                    MainActivity::class.java
+                                ).apply {
+                                    userdata.updateAppData(
+                                        newUser.userId,
+                                        code_input.toString(),
+                                        "Player",
+                                        userdata.Team.value.toString(),
+                                        userdata.Status.value.toString()
+                                    )
+                                }
+                                context.startActivity(Intent) // move to main
+                            })
                             if (showUserDialog == true) {
                                 AlertDialog(
                                     onDismissRequest = { showUserDialog = false },
@@ -417,9 +278,37 @@ class landing_page : ComponentActivity() {
                                     .padding(bottom = 16.dp)
                             )
 
-                            Join_session(userdata)
+                            Join_session(userdata,FirebaseAccess,context, onSucc = { newUser, code_input->
+                                val Intent = Intent(
+                                    context,
+                                    MainActivity::class.java
+                                ).apply {
+                                    userdata.updateAppData(
+                                        newUser.userId,
+                                        code_input.toString(),
+                                        "Player",
+                                        userdata.Team.value.toString(),
+                                        userdata.Status.value.toString()
+                                    )
+                                }
+                                context.startActivity(Intent) // move to main
+                            })
                             Spacer(Modifier.height(32.dp))
-                            Create_session(userdata)
+                            Create_session(userdata,FirebaseAccess,context, onSucc = { newUser, id->
+                                val Intent = Intent(
+                                    context,
+                                    MainActivity::class.java
+                                ).apply { // passes values to main
+                                    userdata.updateAppData(
+                                        newUser.userId,
+                                        id,
+                                        newUser.role,
+                                        userdata.Team.value.toString(),
+                                        userdata.Status.value.toString()
+                                    )
+                                }
+                                context.startActivity(Intent) // move to main
+                            })
                             Spacer(Modifier.height(32.dp))
                             if (showUserDialog == true) {
                                 AlertDialog(
@@ -459,6 +348,7 @@ class landing_page : ComponentActivity() {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
         var type by remember { mutableStateOf(0) }
+        var FirebaseAccess = FirebaseAccess()
 
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_START
@@ -490,41 +380,33 @@ class landing_page : ComponentActivity() {
                 if (mode == "Game") {
                     userdata.Cur_Game.value?.markers = Markers
 
-                    val Ref = database.getReference("sites")
-                    Ref.child(site.site_ID)
+                    val Ref = database.getReference("sites").child(site.site_ID)
                         .child("games")
                         .child(game?.gid ?: return)
                         .child("markers")
-                        .setValue(Markers)
-                        .addOnSuccessListener {
-                            Log.d("SaveAndExit", "Markers saved successfully")
-                            navController.navigateUp()
-                        }
-                        .addOnFailureListener { exception ->
-                            Log.e("SaveAndExit", "Failed to save markers", exception)
-                            navController.navigateUp()
-                        }
+
+                    FirebaseAccess.set_from_reference(Ref, onSucc = {
+                        Log.d("SaveAndExit", "Markers saved successfully")
+                        navController.navigateUp()
+                    }, Markers, onFail = {
+                        Log.e("SaveAndExit", "Failed to save markers")
+                        navController.navigateUp()
+                    })
                 } else if (mode == "Site") {
                     userdata.Cur_Site.value?.markers = Markers
 
-                    val Ref = database.getReference("sites")
-                    Ref.child(site.site_ID)
+                    val Ref = database.getReference("sites").child(site.site_ID)
                         .child("markers")
-                        .setValue(Markers)
-                        .addOnSuccessListener {
-                            Log.d("SaveAndExit", "Markers saved successfully")
-                            navController.navigateUp()
-                        }
-                        .addOnFailureListener { exception ->
-                            Log.e("SaveAndExit", "Failed to save markers", exception)
-                            navController.navigateUp()
-                        }
+                    FirebaseAccess.set_from_reference(Ref, onSucc = {
+                        Log.d("SaveAndExit", "Markers saved successfully")
+                        navController.navigateUp()
+                    }, Markers, onFail = {
+                        Log.e("SaveAndExit", "Failed to save markers")
+                        navController.navigateUp()
+                    })
                 }
-
             } else {
-
                 Log.e("SaveAndExit", "Cannot save: Site or Game is null")
-
             }
         }
 
@@ -564,38 +446,28 @@ class landing_page : ComponentActivity() {
             Configuration.getInstance()
                 .load(context, PreferenceManager.getDefaultSharedPreferences(context))
             Configuration.getInstance().userAgentValue = "AirsoftAPP"
-            val pullRef = database.getReference("sites")
 
             if (mode == "Game"){
-                pullRef.child(SID.toString()).child("games").child(GID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val loadedMarkers = snapshot.children.mapNotNull { child ->
-                            child.getValue(MapObject::class.java)
-                        }.toMutableList()
+                val pullRef = database.getReference("sites").child(SID.toString()).child("games").child(GID.toString()).child("markers")
 
-                        Markers = loadedMarkers
-                        userdata.Cur_Game.value?.markers = loadedMarkers
-                    }
+                FirebaseAccess.get_from_reference(pullRef, callback = { snapshot ->
+                    val loadedMarkers = snapshot.children.mapNotNull { child ->
+                        child.getValue(MapObject::class.java)
+                    }.toMutableList()
 
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.e("Editor", "Error loading markers: ${error.message}")
-                    }
+                    Markers = loadedMarkers
+                    userdata.Cur_Game.value?.markers = loadedMarkers
                 })
             }else{
-                pullRef.child(SID.toString()).child("markers").addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
+                val pullRef = database.getReference("sites").child(SID.toString()).child("markers")
+                    FirebaseAccess.get_from_reference(pullRef, callback = { snapshot ->
                         val loadedMarkers = snapshot.children.mapNotNull { child ->
                             child.getValue(MapObject::class.java)
                         }.toMutableList()
 
                         Markers = loadedMarkers
                         userdata.Cur_Site.value?.markers = loadedMarkers
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        Log.e("Editor", "Error loading markers: ${error.message}")
-                    }
-                })
+                    })
             }
             getCurLocation()
         }
@@ -718,19 +590,24 @@ class landing_page : ComponentActivity() {
                                 userdata.Cur_Game.value?.desc ?: return@Box,
                                 onDismiss = { showBrief = false },
                                 onConfirm = { title, desc ->
-                                    val Ref = database.getReference("sites")
-                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+                                    val Ref = database.getReference("sites").child(userdata.Cur_Site.value?.site_ID.toString())
                                         .child("games")
                                         .child(userdata.Cur_Game.value?.gid.toString()).child("name")
-                                        .setValue(title).addOnSuccessListener {
-                                            userdata.Cur_Game.value?.name = title
-                                        }
-                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
+
+                                    FirebaseAccess.set_from_reference(Ref, onSucc = {
+                                        userdata.Cur_Game.value?.name = title
+                                    },
+                                        title, onFail = {
+
+                                        })
+                                    val Ref2 = database.getReference("sites").child(userdata.Cur_Site.value?.site_ID.toString())
                                         .child("games")
                                         .child(userdata.Cur_Game.value?.gid.toString()).child("desc")
-                                        .setValue(desc).addOnSuccessListener {
-                                            userdata.Cur_Game.value?.desc = desc
-                                        }
+                                    FirebaseAccess.set_from_reference(Ref2, onSucc = {
+                                        userdata.Cur_Game.value?.desc = desc
+                                    },desc, onFail = {
+
+                                    })
                                     showBrief = false
 
                                 }
@@ -741,17 +618,17 @@ class landing_page : ComponentActivity() {
                                 userdata.Cur_Site.value?.brief ?: return@Box,
                                 onDismiss = { showBrief = false },
                                 onConfirm = { title, desc ->
-                                    val Ref = database.getReference("sites")
-                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
-                                        .child("name")
-                                        .setValue(title).addOnSuccessListener {
-                                            userdata.Cur_Game.value?.name = title
-                                        }
-                                    Ref.child(userdata.Cur_Site.value?.site_ID.toString())
-                                        .child("brief")
-                                        .setValue(desc).addOnSuccessListener {
-                                            userdata.Cur_Game.value?.desc = desc
-                                        }
+                                    val Ref = database.getReference("sites").child(userdata.Cur_Site.value?.site_ID.toString())
+                                    FirebaseAccess.set_from_reference(Ref.child("name"), onSucc = {
+                                        userdata.Cur_Game.value?.name = title
+                                    },title, onFail = {
+
+                                    })
+                                    FirebaseAccess.set_from_reference(Ref.child("brief"), onSucc = {
+                                        userdata.Cur_Game.value?.desc = title
+                                    },title, onFail = {
+
+                                    })
                                     showBrief = false
                                 }
                             )

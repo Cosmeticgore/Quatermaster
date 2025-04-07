@@ -1,6 +1,9 @@
 package com.example.fyp_prototype
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +20,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -40,6 +45,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -50,18 +56,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.database
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlin.collections.contains
+import kotlin.random.Random
 
 
 /* USAGE
@@ -163,49 +177,44 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
     val database = FirebaseDatabase.getInstance()
     val databaseRef = database.getReference("sites")
     var showDialog by remember { mutableStateOf(false) }
+    var FirebaseAccess = FirebaseAccess()
 
     fun fetchsitelist(){
         val tempsites = mutableListOf<site>()
-        databaseRef
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    for (siteSnapshot in snapshot.children) {
-                        try {
-                            val sitesData = siteSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any>>() {})
-                            if (sitesData != null) {
 
-                                val name = sitesData["name"] as? String ?: ""
-                                val siteId = sitesData["site_ID"] as? String ?: ""
+        FirebaseAccess.get_from_reference(databaseRef, callback = { snapshot ->
+            for (siteSnapshot in snapshot.children) {
+                try {
+                    val sitesData = siteSnapshot.getValue(object : GenericTypeIndicator<Map<String, Any>>() {})
+                    if (sitesData != null) {
 
-                                val userIDs = when (val rawUID = sitesData["users_IDs"]) {
-                                    is List<*> -> (rawUID as? List<String>) ?: emptyList()
-                                    is Map<*,*> -> (rawUID as? Map<String, String>)?.values?.toList() ?: emptyList()
-                                    else -> emptyList()
-                                }
+                        val name = sitesData["name"] as? String ?: ""
+                        val siteId = sitesData["site_ID"] as? String ?: ""
 
-                                if (userIDs.contains(userdata.user_ID.value)){
-                                    tempsites.add(
-                                        site(
-                                            name = name,
-                                            site_ID = siteId,
-                                            users_IDs = userIDs as MutableList<String>
-                                        )
-                                    )
-                                }
-                            } else {
-                                Log.e("SiteList", "Site List is null")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("FirebaseDebug", "Error deserializing SiteData", e)
+                        val userIDs = when (val rawUID = sitesData["users_IDs"]) {
+                            is List<*> -> (rawUID as? List<String>) ?: emptyList()
+                            is Map<*,*> -> (rawUID as? Map<String, String>)?.values?.toList() ?: emptyList()
+                            else -> emptyList()
                         }
-                    }
-                    sites.value = tempsites
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "Database query failed: ${error.message}")
+                        if (userIDs.contains(userdata.user_ID.value)){
+                            tempsites.add(
+                                site(
+                                    name = name,
+                                    site_ID = siteId,
+                                    users_IDs = userIDs as MutableList<String>
+                                )
+                            )
+                        }
+                    } else {
+                        Log.e("SiteList", "Site List is null")
+                    }
+                } catch (e: Exception) {
+                    Log.e("FirebaseDebug", "Error deserializing SiteData", e)
                 }
-            })
+            }
+            sites.value = tempsites
+        })
     }
 
     LaunchedEffect(Unit) {
@@ -387,6 +396,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     val database = FirebaseDatabase.getInstance()
     var showDialog by remember { mutableStateOf(false) }
     var STID: String? = null
+    var FirebaseAccess = FirebaseAccess()
 
     if (edit == true){
         STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
@@ -398,35 +408,28 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
 
     fun fetchgamelist(){
         val tempgames = mutableListOf<game>()
-        databaseRef
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    for (siteSnapshot in snapshot.children) {
-                        try {
-                            val gamesData = siteSnapshot.getValue(game::class.java)
-                            if (gamesData != null) {
-                                tempgames.add(
-                                    game(
-                                        gamesData.gid,
-                                        gamesData.name,
-                                        gamesData.desc
-                                    )
-                                )
-                                Log.i("GameList", "Added Site ${gamesData?.name}")
-                            } else {
-                                Log.e("GameList", "Site List is null")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("FirebaseDebug", "Error deserializing GameData", e)
-                        }
+        FirebaseAccess.get_from_reference(databaseRef, callback = { snapshot ->
+            for (siteSnapshot in snapshot.children) {
+                try {
+                    val gamesData = siteSnapshot.getValue(game::class.java)
+                    if (gamesData != null) {
+                        tempgames.add(
+                            game(
+                                gamesData.gid,
+                                gamesData.name,
+                                gamesData.desc
+                            )
+                        )
+                        Log.i("GameList", "Added Site ${gamesData?.name}")
+                    } else {
+                        Log.e("GameList", "Site List is null")
                     }
-                    games.value = tempgames
+                } catch (e: Exception) {
+                    Log.e("FirebaseDebug", "Error deserializing GameData", e)
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "Database query failed: ${error.message}")
-                }
-            })
+            }
+            games.value = tempgames
+        })
     }
 
     LaunchedEffect(Unit) {
@@ -1152,5 +1155,130 @@ fun button_common(String: String, onClick: () -> Unit){
             )
         {
         Text(String)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Context, onSucc:(user,String) -> Unit) {
+    var code_input by remember { mutableStateOf("") }
+    val database = Firebase.database
+    val databaseRef = database.getReference("sessions")
+
+    val modifier = Modifier
+        .padding(16.dp)
+        .fillMaxWidth()
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        OutlinedTextField( // code input field
+            value = code_input,
+            onValueChange = {
+                if (it.length <= 6 && it.all { char -> char.isDigit() }) {
+                    code_input = it
+                }
+            },
+            label = { Text("Enter 6-digit code") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
+            modifier = modifier.padding(4.dp),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                containerColor = androidx.compose.ui.graphics.Color.White,
+            ),
+        )
+        button_common("Join Session", onClick = {
+            if (code_input.length == 6) {
+
+                firebaseAccess.get_from_reference(databaseRef.child(code_input), callback = { snapshot ->
+                    val newUser = user( //create a new user
+                        userId = userdata.user_ID.value.toString(),
+                        username = userdata.Username.value.toString()
+                    )
+                    if (snapshot.exists()) {
+                        firebaseAccess.set_from_reference( databaseRef.child(code_input).child("users").child(newUser.userId),
+                            onSucc = {
+                                onSucc(newUser,code_input)
+                            },newUser, onFail = {
+                                val err_toast = Toast.makeText(
+                                    context,
+                                    "Failed to Join Session - Connection Issue",
+                                    Toast.LENGTH_SHORT
+                                )
+                                err_toast.show()
+                            })
+                    } else {
+                        val err_toast = Toast.makeText(
+                            context,
+                            "Failed to Join Session - Code Invalid",
+                            Toast.LENGTH_SHORT
+                        )
+                        err_toast.show()
+                    }
+                })
+            } else {
+                val err_toast =
+                    Toast.makeText(
+                        context,
+                        "Code must be 6 digits long",
+                        Toast.LENGTH_SHORT
+                    )
+                err_toast.show()
+            }
+
+        } )
+    }
+}
+
+// this is the create session button, has all the logic inside
+@Composable
+fun Create_session(userdata: AppData,FirebaseAccess: FirebaseAccess, context: Context,onSucc:(user,String) -> Unit) {
+    val database = Firebase.database
+    val databaseRef = database.getReference("sessions")
+    val context = LocalContext.current
+
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+    ) {
+        button_common("Create Session",
+            onClick = {
+                val id = Random.nextInt(100000, 999999).toString() //generates a session ID
+                val newUser = user( //creates a new user
+                    userId = userdata.user_ID.value.toString(),
+                    role = "Admin",
+                    username = userdata.Username.value.toString()
+                )
+
+                val session = session( //creates the session
+                    session_Id = id,
+                    users = mapOf(userdata.user_ID.value.toString() to newUser)
+                )
+
+                FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Log.w("Fetching FCM registration token failed", task.exception)
+                        return@OnCompleteListener
+                    }
+                    newUser.not_token = task.result
+                })
+
+                FirebaseAccess.set_from_reference(databaseRef.child(id), onSucc = {
+                    onSucc(newUser,id)
+                },session, onFail = {
+                    val err_toast =
+                        Toast.makeText(
+                            context,
+                            "Failed to Create Session",
+                            Toast.LENGTH_SHORT
+                        )
+                    err_toast.show()
+                })
+            }
+        )
     }
 }
