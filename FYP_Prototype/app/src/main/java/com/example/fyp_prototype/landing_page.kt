@@ -29,6 +29,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -81,7 +83,7 @@ import kotlin.random.Random
 class landing_page : ComponentActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     lateinit var userdata: AppData
-    var FirebaseAccess = FirebaseAccess()
+    var FirebaseAccess = FirebaseAccess(FirebaseDatabase.getInstance())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -157,6 +159,8 @@ class landing_page : ComponentActivity() {
     private fun join_create(userdata: AppData, navController: NavController) {
         userdata.reset_data() // reset the stored user data
         val context = LocalContext.current
+        val snackbar = remember { SnackbarHostState() }
+
 
         // get the username and UID from the shared preferences
         val sharedPref =
@@ -199,129 +203,153 @@ class landing_page : ComponentActivity() {
         //UI
         FYP_PrototypeTheme {
             if (Landscape){
-
-                Box(// make sure everything aligns
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
+                Scaffold(snackbarHost = {SnackbarHost(snackbar)}) { paddingValues ->
+                    Box(// make sure everything aligns
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
                     ) {
-                        infotopbar( //top nav bar
-                            onUsernameClick = { showDialog.value = true },
-                            onSiteClick = { navController.navigate("sites") },
-                            onUserclick = { showUserDialog = true}
-                        )
-                        Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
-                            .background(androidx.compose.ui.graphics.Color.Gray)
-                            .padding(16.dp)
-                        )
-                        {
-                            Join_session(userdata,FirebaseAccess,context, onSucc = { newUser, code_input->
-                                val Intent = Intent(
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            infotopbar( //top nav bar
+                                onUsernameClick = { showDialog.value = true },
+                                onSiteClick = { navController.navigate("sites") },
+                                onUserclick = { showUserDialog = true }
+                            )
+                            Column(
+                                modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(androidx.compose.ui.graphics.Color.Gray)
+                                    .padding(16.dp)
+                            )
+                            {
+                                Join_session(
+                                    userdata,
+                                    FirebaseAccess,
                                     context,
-                                    MainActivity::class.java
-                                ).apply {
-                                    userdata.updateAppData(
-                                        newUser.userId,
-                                        code_input.toString(),
-                                        "Player",
-                                        userdata.Team.value.toString(),
-                                        userdata.Status.value.toString()
+                                    onSucc = { newUser, code_input ->
+                                        val Intent = Intent(
+                                            context,
+                                            MainActivity::class.java
+                                        ).apply {
+                                            userdata.updateAppData(
+                                                newUser.userId,
+                                                code_input.toString(),
+                                                "Player",
+                                                userdata.Team.value.toString(),
+                                                userdata.Status.value.toString()
+                                            )
+                                        }
+                                        context.startActivity(Intent) // move to main
+                                    },
+                                    snackbar
+                                )
+                                if (showUserDialog == true) {
+                                    AlertDialog(
+                                        onDismissRequest = { showUserDialog = false },
+                                        title = { Text("User ID:") },
+                                        text = { Text(userdata.user_ID.value.toString()) },
+                                        confirmButton = {},
+                                        dismissButton = {
+                                            TextButton(onClick = {
+                                                showUserDialog = false
+                                            }) { Text("Close") }
+                                        }
                                     )
                                 }
-                                context.startActivity(Intent) // move to main
-                            })
-                            if (showUserDialog == true) {
-                                AlertDialog(
-                                    onDismissRequest = { showUserDialog = false },
-                                    title = { Text("User ID:") },
-                                    text = { Text(userdata.user_ID.value.toString()) },
-                                    confirmButton = {},
-                                    dismissButton = {
-                                        TextButton(onClick = {
-                                            showUserDialog = false
-                                        }) { Text("Close") }
-                                    }
-                                )
                             }
                         }
                     }
                 }
 
             }else{
-                Box(// make sure everything aligns
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
+                Scaffold(snackbarHost = {SnackbarHost(snackbar)}) { paddingValues ->
+                    Box(// make sure everything aligns
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
                     ) {
-                        infotopbar( //top nav bar
-                            onUsernameClick = { showDialog.value = true },
-                            onSiteClick = { navController.navigate("sites") },
-                            onUserclick = { showUserDialog = true}
-                        )
-                        Column(modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
-                            .background(androidx.compose.ui.graphics.Color.Gray)
-                            .padding(16.dp)
-                        )
-                        {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo2),
-                                contentDescription = "logo",
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .size(220.dp)
-                                    .padding(bottom = 16.dp)
+                        Column(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            infotopbar( //top nav bar
+                                onUsernameClick = { showDialog.value = true },
+                                onSiteClick = { navController.navigate("sites") },
+                                onUserclick = { showUserDialog = true }
                             )
-
-                            Join_session(userdata,FirebaseAccess,context, onSucc = { newUser, code_input->
-                                val Intent = Intent(
-                                    context,
-                                    MainActivity::class.java
-                                ).apply {
-                                    userdata.updateAppData(
-                                        newUser.userId,
-                                        code_input.toString(),
-                                        "Player",
-                                        userdata.Team.value.toString(),
-                                        userdata.Status.value.toString()
-                                    )
-                                }
-                                context.startActivity(Intent) // move to main
-                            })
-                            Spacer(Modifier.height(32.dp))
-                            Create_session(userdata,FirebaseAccess,context, onSucc = { newUser, id->
-                                val Intent = Intent(
-                                    context,
-                                    MainActivity::class.java
-                                ).apply { // passes values to main
-                                    userdata.updateAppData(
-                                        newUser.userId,
-                                        id,
-                                        newUser.role,
-                                        userdata.Team.value.toString(),
-                                        userdata.Status.value.toString()
-                                    )
-                                }
-                                context.startActivity(Intent) // move to main
-                            })
-                            Spacer(Modifier.height(32.dp))
-                            if (showUserDialog == true) {
-                                AlertDialog(
-                                    onDismissRequest = { showUserDialog = false },
-                                    title = { Text("User ID:") },
-                                    text = { Text(userdata.user_ID.value.toString()) },
-                                    confirmButton = {},
-                                    dismissButton = {
-                                        TextButton(onClick = {
-                                            showUserDialog = false
-                                        }) { Text("Close") }
-                                    }
+                            Column(
+                                modifier = Modifier.padding(16.dp).clip(RoundedCornerShape(12.dp))
+                                    .background(androidx.compose.ui.graphics.Color.Gray)
+                                    .padding(16.dp)
+                            )
+                            {
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo2),
+                                    contentDescription = "logo",
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .size(220.dp)
+                                        .padding(bottom = 16.dp)
                                 )
+
+                                Join_session(
+                                    userdata,
+                                    FirebaseAccess,
+                                    context,
+                                    onSucc = { newUser, code_input ->
+                                        val Intent = Intent(
+                                            context,
+                                            MainActivity::class.java
+                                        ).apply {
+                                            userdata.updateAppData(
+                                                newUser.userId,
+                                                code_input.toString(),
+                                                "Player",
+                                                userdata.Team.value.toString(),
+                                                userdata.Status.value.toString()
+                                            )
+                                        }
+                                        context.startActivity(Intent) // move to main
+                                    },
+                                    snackbar
+                                )
+                                Spacer(Modifier.height(32.dp))
+                                Create_session(
+                                    userdata,
+                                    FirebaseAccess,
+                                    context,
+                                    onSucc = { newUser, id ->
+                                        val Intent = Intent(
+                                            context,
+                                            MainActivity::class.java
+                                        ).apply { // passes values to main
+                                            userdata.updateAppData(
+                                                newUser.userId,
+                                                id,
+                                                newUser.role,
+                                                userdata.Team.value.toString(),
+                                                userdata.Status.value.toString()
+                                            )
+                                        }
+                                        context.startActivity(Intent) // move to main
+
+                                    },snackbar)
+                                Spacer(Modifier.height(32.dp))
+                                if (showUserDialog == true) {
+                                    AlertDialog(
+                                        onDismissRequest = { showUserDialog = false },
+                                        title = { Text("User ID:") },
+                                        text = { Text(userdata.user_ID.value.toString()) },
+                                        confirmButton = {},
+                                        dismissButton = {
+                                            TextButton(onClick = {
+                                                showUserDialog = false
+                                            }) { Text("Close") }
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -348,7 +376,7 @@ class landing_page : ComponentActivity() {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
         var type by remember { mutableStateOf(0) }
-        var FirebaseAccess = FirebaseAccess()
+        var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
 
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_START
@@ -458,16 +486,18 @@ class landing_page : ComponentActivity() {
                     Markers = loadedMarkers
                     userdata.Cur_Game.value?.markers = loadedMarkers
                 })
-            }else{
+            }
+            else
+            {
                 val pullRef = database.getReference("sites").child(SID.toString()).child("markers")
-                    FirebaseAccess.get_from_reference(pullRef, callback = { snapshot ->
-                        val loadedMarkers = snapshot.children.mapNotNull { child ->
-                            child.getValue(MapObject::class.java)
-                        }.toMutableList()
+                FirebaseAccess.get_from_reference(pullRef, callback = { snapshot ->
+                    val loadedMarkers = snapshot.children.mapNotNull { child ->
+                        child.getValue(MapObject::class.java)
+                    }.toMutableList()
 
-                        Markers = loadedMarkers
-                        userdata.Cur_Site.value?.markers = loadedMarkers
-                    })
+                    Markers = loadedMarkers
+                    userdata.Cur_Site.value?.markers = loadedMarkers
+                })
             }
             getCurLocation()
         }

@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,6 +75,9 @@ import com.google.firebase.database.GenericTypeIndicator
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.collections.contains
 import kotlin.random.Random
 
@@ -177,7 +181,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
     val database = FirebaseDatabase.getInstance()
     val databaseRef = database.getReference("sites")
     var showDialog by remember { mutableStateOf(false) }
-    var FirebaseAccess = FirebaseAccess()
+    var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
 
     fun fetchsitelist(){
         val tempsites = mutableListOf<site>()
@@ -396,7 +400,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     val database = FirebaseDatabase.getInstance()
     var showDialog by remember { mutableStateOf(false) }
     var STID: String? = null
-    var FirebaseAccess = FirebaseAccess()
+    var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
 
     if (edit == true){
         STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
@@ -1160,7 +1164,7 @@ fun button_common(String: String, onClick: () -> Unit){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Context, onSucc:(user,String) -> Unit) {
+fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Context, onSucc:(user,String) -> Unit, snackbar: SnackbarHostState) {
     var code_input by remember { mutableStateOf("") }
     val database = Firebase.database
     val databaseRef = database.getReference("sessions")
@@ -1201,30 +1205,21 @@ fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Con
                             onSucc = {
                                 onSucc(newUser,code_input)
                             },newUser, onFail = {
-                                val err_toast = Toast.makeText(
-                                    context,
-                                    "Failed to Join Session - Connection Issue",
-                                    Toast.LENGTH_SHORT
-                                )
-                                err_toast.show()
+
+                                CoroutineScope(Dispatchers.Main).launch{
+                                    snackbar.showSnackbar("Failed to Join Session - Connection Issue")
+                                }
                             })
                     } else {
-                        val err_toast = Toast.makeText(
-                            context,
-                            "Failed to Join Session - Code Invalid",
-                            Toast.LENGTH_SHORT
-                        )
-                        err_toast.show()
+                        CoroutineScope(Dispatchers.Main).launch{
+                            snackbar.showSnackbar("Failed to Join Session - Code Invalid")
+                        }
                     }
                 })
             } else {
-                val err_toast =
-                    Toast.makeText(
-                        context,
-                        "Code must be 6 digits long",
-                        Toast.LENGTH_SHORT
-                    )
-                err_toast.show()
+                CoroutineScope(Dispatchers.Main).launch{
+                    snackbar.showSnackbar("Code must be 6 digits long")
+                }
             }
 
         } )
@@ -1233,10 +1228,9 @@ fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Con
 
 // this is the create session button, has all the logic inside
 @Composable
-fun Create_session(userdata: AppData,FirebaseAccess: FirebaseAccess, context: Context,onSucc:(user,String) -> Unit) {
+fun Create_session(userdata: AppData,FirebaseAccess: FirebaseAccess, context: Context,onSucc:(user,String) -> Unit, snackbar: SnackbarHostState) {
     val database = Firebase.database
     val databaseRef = database.getReference("sessions")
-    val context = LocalContext.current
 
 
     Column(
@@ -1270,13 +1264,9 @@ fun Create_session(userdata: AppData,FirebaseAccess: FirebaseAccess, context: Co
                 FirebaseAccess.set_from_reference(databaseRef.child(id), onSucc = {
                     onSucc(newUser,id)
                 },session, onFail = {
-                    val err_toast =
-                        Toast.makeText(
-                            context,
-                            "Failed to Create Session",
-                            Toast.LENGTH_SHORT
-                        )
-                    err_toast.show()
+                    CoroutineScope(Dispatchers.Main).launch{
+                        snackbar.showSnackbar("Failed to Create Session")
+                    }
                 })
             }
         )

@@ -1,29 +1,30 @@
 package com.example.fyp_prototype
 
+import io.mockk.verify
 import com.google.firebase.database.DatabaseReference
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.spyk
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.mock
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doNothing
-import org.mockito.kotlin.spy
-import org.mockito.kotlin.verify
 import org.osmdroid.views.MapView
 
 
 class LocationMarker_UT {
 
     private lateinit var locationMarker: LocationMarker
-    private val mockUserData: AppData = mock()
-    private val mockMap: MapView = mock()
+    private val mockUserData: AppData = mockk()
+    private val mockMap: MapView = mockk()
 
     @Before
     fun setUp() {
-        locationMarker = LocationMarker(mockUserData, mock())
+        locationMarker = LocationMarker(mockUserData, mockk())
     }
 
-    @Test fun updates_data(){
+    @Test
+    fun updates_data(){
         //arrange
         val currentUser = user(userId = "UID_123", team = "Red", role = "Player")
         val users = listOf(
@@ -41,7 +42,8 @@ class LocationMarker_UT {
 
     }
 
-    @Test fun updates_team(){
+    @Test
+    fun updates_team(){
         //arrange
         val currentUser = user(userId = "UID_123", team = "Red", role = "Player")
         val users = listOf(
@@ -50,8 +52,8 @@ class LocationMarker_UT {
             user(userId = "UID_125", team = "Blue", role = "Player")
         )
 
-        val susLocationMarker = spy(locationMarker)
-        doNothing().`when`(susLocationMarker).updatemarker(any(), any())
+        val susLocationMarker = spyk(locationMarker)
+        every { susLocationMarker.updatemarker(any(), any()) } just Runs
         //act
         susLocationMarker.handleUserupdates(
             currentUser,
@@ -60,10 +62,13 @@ class LocationMarker_UT {
             updateAppData = {}
         )
         //assert
-        verify(susLocationMarker).updatemarker(mockMap,users[1])
+        verify(exactly = 1) {
+            susLocationMarker.updatemarker(mockMap, users[1])
+        }
     }
 
-    @Test fun admin_sees_all(){
+    @Test
+    fun admin_sees_all(){
         //arrange
         val currentUser = user(userId = "UID_123", team = "Red", role = "Admin")
         val users = listOf(
@@ -72,8 +77,8 @@ class LocationMarker_UT {
             user(userId = "UID_125", team = "Blue", role = "Player")
         )
 
-        val susLocationMarker = spy(locationMarker)
-        doNothing().`when`(susLocationMarker).updatemarker(any(), any())
+        val susLocationMarker = spyk(locationMarker)
+        every { susLocationMarker.updatemarker(any(), any()) } just Runs
         //act
         susLocationMarker.handleUserupdates(
             currentUser,
@@ -82,7 +87,7 @@ class LocationMarker_UT {
             updateAppData = {}
         )
         //assert
-        verify(susLocationMarker).updatemarker(mockMap,users[1])
-        verify(susLocationMarker).updatemarker(mockMap,users[2])
+        verify { susLocationMarker.updatemarker(mockMap, users[1]) }
+        verify { susLocationMarker.updatemarker(mockMap, users[2]) }
     }
 }

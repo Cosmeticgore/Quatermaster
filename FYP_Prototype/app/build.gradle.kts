@@ -40,6 +40,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging{
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            merges += "META-INF/LICENSE.md"
+            merges += "META-INF/LICENSE-notice.md"
+        }
+    }
 }
 
 dependencies {
@@ -71,12 +79,9 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.functions)
     implementation("androidx.navigation:navigation-compose:$nav_version")
-
-    //testImplementation ("junit:junit:5.10.1")
     testImplementation ("androidx.test:core:1.5.0")
-    testImplementation ("org.mockito:mockito-core:5.10.0")
-    testImplementation ("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation ("io.mockk:mockk:1.13.10")
+    testImplementation ("io.mockk:mockk-android:1.13.10")
+    androidTestImplementation ("io.mockk:mockk-android:1.13.10")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.1")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.1")
 }

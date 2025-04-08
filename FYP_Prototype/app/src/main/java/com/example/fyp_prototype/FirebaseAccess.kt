@@ -6,8 +6,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
-class FirebaseAccess {
-    val database = FirebaseDatabase.getInstance()
+class FirebaseAccess(database: FirebaseDatabase) {
 
     fun get_from_reference(ref: DatabaseReference, callback: (DataSnapshot) -> Unit){
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
