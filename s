@@ -1,0 +1,284 @@
+[33mcommit da0b6e3790d130b1ad748027950b1878bce7bb66[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Apr 9 22:49:00 2025 +0100
+
+    More Report Work
+
+[33mcommit 02fdbbc5dfbea716c5a953b6869346a03c894b01[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Apr 8 22:03:47 2025 +0100
+
+    more testing
+
+[33mcommit b97876ec097ae2dc279d4d7400089b98fe63bcb1[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Mon Apr 7 20:04:25 2025 +0100
+
+    refactoring code for testing
+
+[33mcommit 442db598b882b25888941470fdbd85e1f3359979[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sun Apr 6 22:26:31 2025 +0100
+
+    working on some unit testing and refactoring
+
+[33mcommit 54ed9e2e08b613d97aa78e7aa53176915c1c1291[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Apr 4 22:05:04 2025 +0100
+
+    adding comments
+
+[33mcommit 290cba81dcce0f6b99cfbc2f6645f94000aeaaa5[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Apr 4 20:05:05 2025 +0100
+
+    Added Logo
+
+[33mcommit d8e55d95072c83fdb5481c453e9dc66870e4527f[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Apr 4 19:11:38 2025 +0100
+
+    Updated UI
+
+[33mcommit 81e83c262e24b68a7f4a2fe7222253cd1c37f1f5[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Apr 4 15:08:15 2025 +0100
+
+    myLocationbug fixed again
+
+[33mcommit 06590ce83d082656ebe201cf8ee4c042df873d9e[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Thu Apr 3 22:26:33 2025 +0100
+
+    report
+
+[33mcommit fa1e6eee11765050c223146277bd3870f49adce7[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Apr 2 19:53:08 2025 +0100
+
+    doing report
+
+[33mcommit 9e3f2b585076e7713e29477639b180c1c1b73d25[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 26 17:07:43 2025 +0000
+
+    Fixed mylocation in editor bug
+
+[33mcommit 42af9beb8de2396ff32d6deb3fb1cb0d1d74d6f8[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 26 13:56:35 2025 +0000
+
+    Added site brief to info page
+
+[33mcommit 14bffe25b7be77aceab9b5f9f9416b23771bd96a[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 26 13:47:30 2025 +0000
+
+    Poly/Line Editor Added
+
+[33mcommit ff8991eccf434b47f223ab22200963b8532724c7[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 26 12:45:07 2025 +0000
+
+    Added site editor, and various other fixes
+
+[33mcommit fab47dfbaff145613836e91e89bea96b2233fd88[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Mar 25 19:23:53 2025 +0000
+
+    Finished game designer
+
+[33mcommit 29d140b8f798593546c583fd4ba5b186b8eb0d7f[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Mar 25 13:55:52 2025 +0000
+
+    more work on UI
+
+[33mcommit 526050b16acfabbea5e0cbf1100bb17b35895930[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Mar 25 12:59:57 2025 +0000
+
+    More Ui work, added the ability to change username in app
+
+[33mcommit 8d64a86fbe299d65b945f6693d5f9ce4c0527c05[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Mon Mar 24 23:43:05 2025 +0000
+
+    UI done for map and lists
+
+[33mcommit 6cd36ea9c3395d42e903ef433749fc1ca3345051[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Mon Mar 24 21:11:00 2025 +0000
+
+    UI work started
+
+[33mcommit 5716e2b3d0ce3b0f7a81c275fb529c38ce1d5e64[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sun Mar 23 08:18:06 2025 +0000
+
+    First Build
+
+[33mcommit 285fdea227eb87618fb039e331e1cdf564b74694[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sat Mar 22 10:25:10 2025 +0000
+
+    Added icons
+
+[33mcommit 7936cf2a28fc1fbf8fe0be449cabe27704026b1b[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Mar 21 14:56:29 2025 +0000
+
+    added brief editing
+
+[33mcommit f5cd2ed3efc491033c8e64ff9f1e8ea591865182[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Mar 21 13:30:41 2025 +0000
+
+    First working version with gamedesigner kidna workin
+
+[33mcommit 926ba661389113cd8c972d02f62e851114108cb4[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Thu Mar 20 21:59:11 2025 +0000
+
+    added MapObject Object
+
+[33mcommit 70fc45630799f33ca9348234ff61738d86697880[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 19 20:59:47 2025 +0000
+
+    added sync with database for current game
+
+[33mcommit eb569bab5e2edc107dd1554f5c743614bfee45ba[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 19 15:03:39 2025 +0000
+
+    more work on game designer
+
+[33mcommit d74c4d0d9de4752aa5115d9b23925d9879efe93d[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 19 13:52:59 2025 +0000
+
+    Report writing
+
+[33mcommit 7eb3be33973ae18ae63393312563d6d73821879e[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 19 13:52:17 2025 +0000
+
+    Report writing
+
+[33mcommit 4de75b3c7edb6001e1375d0d9b297d18b1124382[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 19 11:29:23 2025 +0000
+
+    Added selecting a site/game in session now
+
+[33mcommit a0c306b8d8c6e8e1d101c346b2d829149ca13072[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Mar 18 21:04:52 2025 +0000
+
+    More work on Gamedesigner
+
+[33mcommit 95781c66bf9296f01f3f3029fb9630802b1556b9[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Mon Mar 17 19:37:36 2025 +0000
+
+    Not alot of work lately need to be better >:(, added some stuff todo with the sites to games/ site creation aspect
+
+[33mcommit ca7bd45a38304824b700d8bae5ad069452d65d26[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sat Mar 15 18:40:35 2025 +0000
+
+    added username and a persistant UID
+
+[33mcommit 7b056b6276eac68becee108fc3d459de3bdae4b6[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Mar 11 20:12:28 2025 +0000
+
+    added markers for warning/help
+
+[33mcommit 7ba8e921688fc7fcea5653beb6cd2e91b1ff93b8[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Mon Mar 10 22:07:29 2025 +0000
+
+    updated ping button and added emergency button
+
+[33mcommit c75f46aeb7dcb9905a63d83a1f0eae23aa1cbf76[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sat Mar 8 21:57:02 2025 +0000
+
+    added list of players
+
+[33mcommit 42b8d76fb8a183bb1be7e78db66088f812034c2d[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Sat Mar 8 20:53:16 2025 +0000
+
+    added list of players
+
+[33mcommit 2e1df5d874f3358368b5098cb080ea4613acd306[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Mar 7 21:17:12 2025 +0000
+
+    moved some stuff
+
+[33mcommit 13cb60144c54f4bae27f40c89c3fe071ad96045a[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Mar 7 17:58:36 2025 +0000
+
+    Added Team Selection
+
+[33mcommit d49856345c3d6e5c2e5db3e12d995cba98567e9f[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Thu Mar 6 20:07:05 2025 +0000
+
+    GCF used to send messages now
+
+[33mcommit 824c60223ab1bb7d51431e12cfc98fbf2d5947df[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Wed Mar 5 08:56:02 2025 +0000
+
+    notification work
+
+[33mcommit 2d3f30b72a74ce4a077da4f3055976801ae93d57[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Feb 21 20:39:37 2025 +0000
+
+    fixed notification bug
+
+[33mcommit c7feeebe7b6108bf9afff59795c36e6d5c25e00b[m
+Merge: e2ac16f 0150850
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Feb 21 19:52:19 2025 +0000
+
+    Merge branch 'main' of https://github.com/Cosmeticgore/Quatermaster
+
+[33mcommit e2ac16f96e1ce1447512227aeaf6a3559f845db5[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Fri Feb 21 19:51:58 2025 +0000
+
+    Updated Location Tracker to work even when closed
+
+[33mcommit 0150850e3436cd75a7ad5bd36e0e45fb1fc230d3[m
+Author: Soger1 <98477507+Soger1@users.noreply.github.com>
+Date:   Wed Feb 19 12:28:40 2025 +0000
+
+    Add files via upload
+
+[33mcommit 32604946014c5621ee483c702ed440b79740997a[m
+Author: Soger1 <C20322553@mytudublin.ie>
+Date:   Tue Feb 18 20:24:34 2025 +0000
+
+    pushing files to git
+
+[33mcommit 27c3447198c98f14a25343c4b247c5b9d14ab43b[m
+Author: Soger1 <98477507+Soger1@users.noreply.github.com>
+Date:   Wed Feb 12 14:13:56 2025 +0000
+
+    Add files via upload
+
+[33mcommit 03845b574cf6ce59be6341d854ded47e60ad6651[m
+Author: Cosmeticgore <86484200+Cosmeticgore@users.noreply.github.com>
+Date:   Tue Feb 11 16:55:53 2025 +0000
+
+    Add files via upload
+
+[33mcomm

@@ -60,7 +60,7 @@ class LocationService: Service() {
     private fun start() {
         val notification = NotificationCompat.Builder(this, "location")
             .setContentTitle("Tracking Location...")
-            .setContentText("Quatermaster")
+            .setContentText("Quartermaster")
             .setSmallIcon(R.drawable.icon)
             .setOngoing(true)
 

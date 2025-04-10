@@ -1,9 +1,6 @@
 package com.example.fyp_prototype
 
-import android.content.Context
-import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +57,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -68,11 +64,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.Firebase
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.GenericTypeIndicator
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
@@ -181,7 +174,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
     val database = FirebaseDatabase.getInstance()
     val databaseRef = database.getReference("sites")
     var showDialog by remember { mutableStateOf(false) }
-    var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
+    var FirebaseAccess = FirebaseAccess()
 
     fun fetchsitelist(){
         val tempsites = mutableListOf<site>()
@@ -400,7 +393,7 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
     val database = FirebaseDatabase.getInstance()
     var showDialog by remember { mutableStateOf(false) }
     var STID: String? = null
-    var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
+    var FirebaseAccess = FirebaseAccess()
 
     if (edit == true){
         STID = navController.currentBackStackEntry?.arguments?.getString("Site_ID")
@@ -879,9 +872,13 @@ fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Un
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () -> Unit,urgentpingclick: () -> Unit, sessionClick: () -> Unit, Tab: String = "Map", navController: NavController, Admin: Boolean = false){
+    // colors
     val selectedColor = Color.White
-    val unselectedColor = Color.LightGray
+    val selectedTextColor = Color.DarkGray
+    val unselectedTextColor = Color.Black
+    val unselectedColor = Color.Green
     val backgroundColor = Color.Gray
+    //states for dialogs and dropdowns
     var expanded by remember { mutableStateOf(false) }
     var PingDialog by remember { mutableStateOf(false) }
     var UrgentPingDialog by remember { mutableStateOf(false) }
@@ -903,7 +900,7 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                         .background(
                             color = if (Tab == "Map")
                                 selectedColor.copy(alpha = 0.3f)
-                            else Color.Transparent,
+                            else unselectedColor,
                             shape = CircleShape
                         )
                         .clickable(onClick = Button2Click)
@@ -912,12 +909,12 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                     Icon(
                         imageVector = Icons.Default.Place,
                         contentDescription = "Map",
-                        tint = if (Tab == "Map") selectedColor else unselectedColor,
+                        tint = if (Tab == "Map") selectedTextColor else unselectedTextColor,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = "Map",
-                        color = if (Tab == "Map") selectedColor else unselectedColor,
+                        color = if (Tab == "Map") selectedTextColor else unselectedTextColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -928,7 +925,7 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                         .background(
                             color = if (Tab == "Info")
                                 selectedColor.copy(alpha = 0.3f)
-                            else Color.Transparent,
+                            else unselectedColor,
                             shape = CircleShape
                         )
                         .clickable(onClick = Button1Click)
@@ -937,12 +934,12 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = "Info",
-                        tint = if (Tab == "Info") selectedColor else unselectedColor,
+                        tint = if (Tab == "Info") selectedTextColor else unselectedTextColor,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = "Info",
-                        color = if (Tab == "Info") selectedColor else unselectedColor,
+                        color = if (Tab == "Info") selectedTextColor else unselectedTextColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -1164,7 +1161,8 @@ fun button_common(String: String, onClick: () -> Unit){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Context, onSucc:(user,String) -> Unit, snackbar: SnackbarHostState) {
+fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess,
+                 onSucc:(user, String) -> Unit, snackbar: SnackbarHostState) {
     var code_input by remember { mutableStateOf("") }
     val database = Firebase.database
     val databaseRef = database.getReference("sessions")
@@ -1228,7 +1226,8 @@ fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess, context: Con
 
 // this is the create session button, has all the logic inside
 @Composable
-fun Create_session(userdata: AppData,FirebaseAccess: FirebaseAccess, context: Context,onSucc:(user,String) -> Unit, snackbar: SnackbarHostState) {
+fun Create_session(userdata: AppData, FirebaseAccess: FirebaseAccess,
+                   onSucc:(user, String) -> Unit, snackbar: SnackbarHostState) {
     val database = Firebase.database
     val databaseRef = database.getReference("sessions")
 

@@ -8,7 +8,6 @@ import android.location.Location
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -24,16 +23,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -57,14 +52,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.fyp_prototype.MapObject.GeoPointData
 import com.example.fyp_prototype.ui.theme.FYP_PrototypeTheme
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.Firebase
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.database
-import com.google.firebase.messaging.FirebaseMessaging
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -76,14 +64,13 @@ import com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider
-import kotlin.random.Random
 
 //This is the Landing page, users start here when the app is opened
 
 class landing_page : ComponentActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     lateinit var userdata: AppData
-    var FirebaseAccess = FirebaseAccess(FirebaseDatabase.getInstance())
+    var FirebaseAccess = FirebaseAccess()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -227,7 +214,6 @@ class landing_page : ComponentActivity() {
                                 Join_session(
                                     userdata,
                                     FirebaseAccess,
-                                    context,
                                     onSucc = { newUser, code_input ->
                                         val Intent = Intent(
                                             context,
@@ -297,7 +283,6 @@ class landing_page : ComponentActivity() {
                                 Join_session(
                                     userdata,
                                     FirebaseAccess,
-                                    context,
                                     onSucc = { newUser, code_input ->
                                         val Intent = Intent(
                                             context,
@@ -319,7 +304,6 @@ class landing_page : ComponentActivity() {
                                 Create_session(
                                     userdata,
                                     FirebaseAccess,
-                                    context,
                                     onSucc = { newUser, id ->
                                         val Intent = Intent(
                                             context,
@@ -376,7 +360,7 @@ class landing_page : ComponentActivity() {
         val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
         var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
         var type by remember { mutableStateOf(0) }
-        var FirebaseAccess = FirebaseAccess( FirebaseDatabase.getInstance())
+        var FirebaseAccess = FirebaseAccess()
 
         Intent(applicationContext, LocationService::class.java).apply {
             action = LocationService.ACTION_START

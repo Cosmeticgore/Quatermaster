@@ -11,7 +11,7 @@ import org.osmdroid.views.overlay.Marker
 
 class AppData private constructor(application: Application) : AndroidViewModel(application){
 
-    companion object {
+    companion object { //singleton object no more than one can exist at each time
         @Volatile
         private var instance: AppData? = null
 
@@ -63,20 +63,5 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         val databaseRef = database.getReference("sessions")
         databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("status").setValue(status)
         Status.value = status
-
-    }
-
-    fun update_role(role: String) {
-        val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("role").setValue(role)
-        Role.value = role
-    }
-
-    fun update_username(username: String) {
-        val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("username").setValue(username)
-        Username.value = username
     }
 }

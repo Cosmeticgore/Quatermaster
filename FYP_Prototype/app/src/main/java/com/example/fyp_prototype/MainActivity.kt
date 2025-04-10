@@ -194,7 +194,7 @@ class MainActivity : ComponentActivity() {
 
         DisposableEffect(Unit) {
             val job = scope.launch { // co routine to have these tasks run with the rest of the app
-                while (isActive) { //gets the location off the location provider *TODO SWITCH THIS TO USING A FUSED LOCATION PROVIDER*
+                while (isActive) { //gets the location off the location provider *
                     if (locationProvider.lastKnownLocation != null) {
                         User.location.latitude = locationProvider.lastKnownLocation.latitude
                         User.location.longitude = locationProvider.lastKnownLocation.longitude
@@ -231,7 +231,7 @@ class MainActivity : ComponentActivity() {
         AndroidView( // this is the map
             modifier = Modifier.fillMaxSize(),//sets the view to cover the entire screen
             factory = {
-                mapView.apply {
+                mapView.apply { // map settings
                     setTileSource(TileSourceFactory.MAPNIK)
                     minZoomLevel = 17.0
                     maxZoomLevel = 20.0
@@ -242,7 +242,7 @@ class MainActivity : ComponentActivity() {
                     overlays.add(compassOverlay)
                 }
             },
-            update = { view ->
+            update = { view -> // draws map markers
                 userdata.Cur_Site.value?.drawMarkers(mapView)
                 userdata.Cur_Game.value?.drawMarkers(mapView)
             }
@@ -254,20 +254,20 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
 
         NavHost(navController = navController, startDestination = "map") {
-            composable("map") {
+            composable("map") { // map screen
                 MapHome(User, Session_ID, navController)
             }
-            composable("info") {
+            composable("info") { // game and site info
                 InfoScreen(navController, Session_ID)
             }
-            composable("players") {
+            composable("players") { // player list
                 PlayersListScreen(navController, Session_ID)
             }
-            composable("selectSite"){
+            composable("selectSite"){ // site selection screen
                 site_view_screen(navController, userdata, false)
             }
-            composable(
-                route = "games_list/{Site_ID}",
+            composable( // game selection screen
+                route = "games_list/{Site_ID}", //site id is passed so it knows what sites game to display
                 arguments = listOf(navArgument("Site_ID") {
                     type = NavType.StringType
                 })
@@ -330,12 +330,12 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun InfoScreen(navController: NavController, Session_ID: String) {
+    private fun InfoScreen(navController: NavController, Session_ID: String) { // info screen displays game and site brief
         var admin : Boolean
-        updateAppdata(userdata)
-        var pingManager = PingManager(userdata,functions)
+        updateAppdata(userdata) // gets latest data
+        var pingManager = PingManager(userdata,functions) // sets up the ping manager
         var showDialog by remember { mutableStateOf(false) }
-        if (userdata.Role.value == "Admin"){
+        if (userdata.Role.value == "Admin"){ // is the user an admin?
             admin = true
         } else{
             admin = false
@@ -390,10 +390,10 @@ class MainActivity : ComponentActivity() {
                                 .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
                                 .padding(8.dp)
                         ) {
-                            val scrollState = rememberScrollState()
+                            val scrollState = rememberScrollState() // used to get the current scroll
                             Column {
                                 Text(
-                                    text = "${userdata.Cur_Game.value?.desc}",
+                                    text = "${userdata.Cur_Game.value?.desc}", // game brief
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier
                                         .verticalScroll(scrollState)
@@ -401,7 +401,7 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Divider()
                                 Text(
-                                    text = "${userdata.Cur_Site.value?.brief}",
+                                    text = "${userdata.Cur_Site.value?.brief}", // site brief
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier
                                         .verticalScroll(scrollState)
@@ -410,7 +410,7 @@ class MainActivity : ComponentActivity() {
                             }
 
 
-                            if (scrollState.canScrollForward) {
+                            if (scrollState.canScrollForward) { // scroll tint
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)

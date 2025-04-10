@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.isDisplayed
@@ -19,25 +16,16 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.MutableLiveData
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.fyp_prototype.AppData
 import junit.framework.TestCase.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runner.manipulation.Ordering
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.RootMatchers.withDecorView
-import androidx.test.espresso.matcher.ViewMatchers.*
 import com.google.firebase.database.DataSnapshot
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import junit.framework.TestCase.assertEquals
-import org.hamcrest.Matchers.*
 
 
 @RunWith(AndroidJUnit4::class)
@@ -73,7 +61,6 @@ class Join_Session_IT {
                     Join_session(
                         userdata = mockuserData,
                         firebaseAccess = mockFirebaseAccess,
-                        context = mockContext,
                         onSucc = { _, _ -> },
                         snackbar = snackbarHostState
                     )
@@ -130,7 +117,6 @@ class Join_Session_IT {
                     Join_session(
                         userdata = mockuserData,
                         firebaseAccess = mockFirebaseAccess,
-                        context = mockContext,
                         onSucc = { _, _ -> },
                         snackbar = snackbarHostState
                     )
@@ -193,7 +179,6 @@ class Join_Session_IT {
                     Join_session(
                         userdata = mockuserData,
                         firebaseAccess = mockFirebaseAccess,
-                        context = mockContext,
                         onSucc = { user, input_code ->
                             userCaptor.captured = user
                             codeCaptor.captured = input_code

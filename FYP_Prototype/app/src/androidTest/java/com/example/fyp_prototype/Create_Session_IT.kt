@@ -98,7 +98,6 @@ class Create_Session_IT {
                     Create_session(
                         userdata = mockuserData,
                         FirebaseAccess = mockFirebaseAccess,
-                        context = mockContext,
                         onSucc = { user, SID ->
                             userCaptor.captured = user
                             sessionIdCaptor.captured =SID
@@ -182,7 +181,6 @@ class Create_Session_IT {
                     Create_session(
                         userdata = mockuserData,
                         FirebaseAccess = mockFirebaseAccess,
-                        context = mockContext,
                         onSucc = { user, SID ->
                             userCaptor.captured = user
                             sessionIdCaptor.captured =SID
