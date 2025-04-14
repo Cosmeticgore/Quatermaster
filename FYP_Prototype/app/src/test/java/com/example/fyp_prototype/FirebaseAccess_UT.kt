@@ -17,11 +17,10 @@ import org.junit.Test
 class FirebaseAccess_UT {
 
     private lateinit var firebaseAccess: FirebaseAccess
-    private val mockDatabase: FirebaseDatabase = mockk()
 
     @Before
     fun setup() {
-        firebaseAccess = FirebaseAccess(mockDatabase)
+        firebaseAccess = FirebaseAccess()
     }
 
     @Test

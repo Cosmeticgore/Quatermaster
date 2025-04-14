@@ -16,7 +16,7 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         private var instance: AppData? = null
 
         fun getInstance(application: Application): AppData{
-            return instance?:synchronized(this){
+            return instance?:synchronized(this){ // sync to avoid a concurrency issue
                 instance ?: AppData(application).also {instance = it}
             }
         }

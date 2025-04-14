@@ -19,7 +19,7 @@ class MapObject {
     var geopoints: MutableList<GeoPointData> = mutableListOf()
     var team: String = "None"
 
-    constructor()
+    constructor() // no arg constructor to avoid causing firebase errors
 
     constructor(
         type: Int,
@@ -30,7 +30,6 @@ class MapObject {
         icon: String = "Flag",
         geopoints: MutableList<GeoPointData>,
         team: String = "None"
-
     ) {
         this.type = type
         this.title = title

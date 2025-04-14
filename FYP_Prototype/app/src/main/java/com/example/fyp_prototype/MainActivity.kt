@@ -390,7 +390,7 @@ class MainActivity : ComponentActivity() {
                                 .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
                                 .padding(8.dp)
                         ) {
-                            val scrollState = rememberScrollState() // used to get the current scroll
+                            val scrollState = rememberScrollState() // used to maintain scroll state
                             Column {
                                 Text(
                                     text = "${userdata.Cur_Game.value?.desc}", // game brief

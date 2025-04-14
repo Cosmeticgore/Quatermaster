@@ -838,9 +838,9 @@ fun LinePolyEditorDialog(
 fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null){
     TopAppBar(
         title = {
-            Text(text = String, color = Color.White)
+            Text(text = String, color = Color.White) // title
         },
-        navigationIcon = {
+        navigationIcon = {// navigate back a screen
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -849,8 +849,8 @@ fun topbarwithtext(String: String, onBackClick: () -> Unit,onAddClick: (() -> Un
                 )
             }
         },
-        actions = {
-          onAddClick?.let {
+        actions = { // add button
+          onAddClick?.let { // if there is no callback setup do not show the button
               IconButton(onClick = it) {
                   Icon(
                       imageVector = Icons.Default.Add,
@@ -887,57 +887,57 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
     val Landscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     TopAppBar(
-        title = {
+        title = { // buttons in here
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
+                Column( // map button
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .background(
-                            color = if (Tab == "Map")
+                            color = if (Tab == "Map") // if selected be grey
                                 selectedColor.copy(alpha = 0.3f)
-                            else unselectedColor,
+                            else unselectedColor, // otherwise green
                             shape = CircleShape
                         )
-                        .clickable(onClick = Button2Click)
+                        .clickable(onClick = Button2Click) //callback
                         .padding(8.dp)
                 ) {
-                    Icon(
+                    Icon( // map icon
                         imageVector = Icons.Default.Place,
                         contentDescription = "Map",
                         tint = if (Tab == "Map") selectedTextColor else unselectedTextColor,
                         modifier = Modifier.size(24.dp)
                     )
-                    Text(
+                    Text( // label
                         text = "Map",
                         color = if (Tab == "Map") selectedTextColor else unselectedTextColor,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-                Column(
+                Column( // info button
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .background(
-                            color = if (Tab == "Info")
+                            color = if (Tab == "Info") // if selected be grey
                                 selectedColor.copy(alpha = 0.3f)
-                            else unselectedColor,
+                            else unselectedColor, // other wise green
                             shape = CircleShape
                         )
-                        .clickable(onClick = Button1Click)
+                        .clickable(onClick = Button1Click) // callback
                         .padding(8.dp)
                 ) {
-                    Icon(
+                    Icon( // info icon
                         imageVector = Icons.Default.Info,
                         contentDescription = "Info",
                         tint = if (Tab == "Info") selectedTextColor else unselectedTextColor,
                         modifier = Modifier.size(24.dp)
                     )
-                    Text(
+                    Text( // label
                         text = "Info",
                         color = if (Tab == "Info") selectedTextColor else unselectedTextColor,
                         style = MaterialTheme.typography.bodySmall
@@ -1025,12 +1025,12 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
 fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: () -> Unit){
     var expanded by remember { mutableStateOf(false) }
     TopAppBar(
-        title = {
+        title = { // title of app
             Text(text = "Quartermaster", color = Color.White)
         },
         actions = {
             Box(){
-                IconButton(onClick = {expanded = !expanded}) {
+                IconButton(onClick = {expanded = !expanded}) { // show dropdown button
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "Options",
@@ -1038,24 +1038,24 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
                     )
                 }
 
-                DropdownMenu(expanded = expanded,
+                DropdownMenu(expanded = expanded, // drop down menu options
                     onDismissRequest = {expanded = false},
                     modifier = Modifier.background(Color.White)) {
-                    DropdownMenuItem(
+                    DropdownMenuItem( //set username
                         text = { Text("Set Username") },
                         onClick = {
                             onUsernameClick()
                             expanded = false
                         }
                     )
-                    DropdownMenuItem(
+                    DropdownMenuItem( // go to sites list
                         text = { Text("View Sites") },
                         onClick = {
                             onSiteClick()
                             expanded = false
                         }
                     )
-                    DropdownMenuItem(
+                    DropdownMenuItem( //shows the user ID - needed to add people to a site for sharing
                         text = { Text("Show User ID") },
                         onClick = {
                             onUserclick()
@@ -1075,13 +1075,14 @@ fun infotopbar(onUsernameClick: () -> Unit,onSiteClick: () -> Unit,onUserclick: 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null,onMarkerClick: () -> Unit,onLineClick: () -> Unit,onPolygonClick: () -> Unit,onBriefClick: () -> Unit){
+fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit)? = null,
+                 onMarkerClick: () -> Unit,onLineClick: () -> Unit,onPolygonClick: () -> Unit,onBriefClick: () -> Unit){
     var expanded by remember { mutableStateOf(false) }
     TopAppBar(
         title = {
             Text(text = String, color = Color.White)
         },
-        navigationIcon = {
+        navigationIcon = { // back button
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -1091,8 +1092,8 @@ fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit
             }
         },
         actions = {
-            onAddClick?.let {
-                IconButton(onClick = {expanded = true}) {
+            onAddClick?.let { // if add click call back exists show
+                IconButton(onClick = {expanded = true}) { // expand drop down
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add",
@@ -1101,31 +1102,31 @@ fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit
                 }
             }
 
-            DropdownMenu(expanded = expanded,
+            DropdownMenu(expanded = expanded, // dropdown menu
                 onDismissRequest = {expanded = false},
                 modifier = Modifier.background(Color.White)) {
-                DropdownMenuItem(
+                DropdownMenuItem( // icon marker option
                     text = { Text("Marker") },
                     onClick = {
                         onMarkerClick()
                         expanded = false
                     }
                 )
-                DropdownMenuItem(
+                DropdownMenuItem(// line marker option
                     text = { Text("Line") },
                     onClick = {
                         onLineClick()
                         expanded = false
                     }
                 )
-                DropdownMenuItem(
+                DropdownMenuItem( // polygon marker option
                     text = { Text("Polygon") },
                     onClick = {
                         onPolygonClick()
                         expanded = false
                     }
                 )
-                DropdownMenuItem(
+                DropdownMenuItem( // edit the text brief
                     text = { Text("Edit Brief") },
                     onClick = {
                         onBriefClick()
@@ -1145,17 +1146,17 @@ fun editortopbar(String: String, onBackClick: () -> Unit,onAddClick: (() -> Unit
 
 @Composable
 fun button_common(String: String, onClick: () -> Unit){
-    ElevatedButton(
-        onClick = {onClick()},
+    ElevatedButton( //elevated give the button a slight drop shadow
+        onClick = {onClick()}, // callback onclick
         modifier = Modifier
             .padding(4.dp),
-            colors = ButtonDefaults.elevatedButtonColors(
+            colors = ButtonDefaults.elevatedButtonColors( // default button colors for quatermaster
                 containerColor = Color.Green,
                 contentColor = Color.Black
             )
             )
         {
-        Text(String)
+        Text(String) // button label
     }
 }
 

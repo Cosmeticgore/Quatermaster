@@ -68,7 +68,7 @@ class LocationService: Service() {
 
         // Launch in serviceScope
         serviceScope.launch {
-            locationClient.getLocationUpdates(10000L)
+            locationClient.getLocationUpdates(15000L) // every 15 seconds
                 .catch { e -> e.printStackTrace() }
                 .collect { location ->
                     val lat = location.latitude.toString()
@@ -87,8 +87,6 @@ class LocationService: Service() {
                     } catch (e: Exception) {
                         Log.e("UpdateLocations", "Failed to update location", e)
                     }
-
-
                 }
         }
     }
