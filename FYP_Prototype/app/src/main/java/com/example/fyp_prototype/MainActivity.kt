@@ -448,50 +448,39 @@ class MainActivity : ComponentActivity() {
         val users = remember { mutableStateOf<List<user>>(emptyList()) }
         val database = FirebaseDatabase.getInstance()
         val databaseRef = database.getReference("sessions")
-
+        val FirebaseAccess = FirebaseAccess()
 
         LaunchedEffect(SID) {
-            val tempusers = mutableListOf<user>()
-            databaseRef.child(SID).child("users")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) { //called when data is changed
-                    for (userSnapshot in snapshot.children) {
-                        try {
-                            val userData = userSnapshot.getValue(user::class.java)
-                            if (userData != null) {
-                                tempusers.add(
-                                    user(
-                                        userData.userId,
-                                        locat(
-                                            userData.location.longitude,
-                                            userData.location.latitude
-                                        ),
-                                        userData.team,
-                                        userData.role,
-                                        userData.status,
-                                        username = userData.username
-                                    )
+            val tempusers = mutableListOf<user>() // temp list of users for storage
+            FirebaseAccess.get_from_reference(databaseRef.child(SID).child("users"), callback = { snapshot ->
+                for (userSnapshot in snapshot.children) { // for each item in the snap shot
+                    try {
+                        val userData = userSnapshot.getValue(user::class.java) // convert each item into a user
+                        if (userData != null) { // if it isnt null add it to the temp list
+                            tempusers.add(
+                                user(
+                                    userData.userId,
+                                    locat(
+                                        userData.location.longitude,
+                                        userData.location.latitude
+                                    ),
+                                    userData.team,
+                                    userData.role,
+                                    userData.status,
+                                    username = userData.username
                                 )
-                                Log.i("PlayerList", "Added User ${userData.userId}")
+                            )
+                            Log.i("PlayerList", "Added User ${userData.userId}")
 
-                            } else { //error handling
-                                Log.e("FirebaseDebug", "UserData is null")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("FirebaseDebug", "Error deserializing UserData", e)
+                        } else { //error handling
+                            Log.e("FirebaseDebug", "UserData is null")
                         }
+                    } catch (e: Exception) {
+                        Log.e("FirebaseDebug", "Error deserializing UserData", e)
                     }
-                    users.value = tempusers
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "Database query failed: ${error.message}")
-                }
-
+                users.value = tempusers // users list = temp list
             })}
-
-
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -500,13 +489,13 @@ class MainActivity : ComponentActivity() {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                topbarwithtext("Players in Session", onBackClick = {navController.navigateUp()})
+                topbarwithtext("Players in Session", onBackClick = {navController.navigateUp()}) // top nav bar
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(16.dp)
-                ) { items(users.value) { user ->
+                ) { items(users.value) { user -> // displaying each user as a item on the list
                     Log.i("PlayerList", "Displaying User")
                     PlayerListItem(user)
                     Divider()
@@ -569,6 +558,7 @@ class MainActivity : ComponentActivity() {
         var expanded by remember { mutableStateOf(false) }
         var showTeamDialog by remember { mutableStateOf(false) }
         var showRoleDialog by remember { mutableStateOf(false) }
+        var FirebaseAccess = FirebaseAccess()
 
         val database = FirebaseDatabase.getInstance()
         val databaseRef = database.getReference("sessions")
@@ -632,8 +622,17 @@ class MainActivity : ComponentActivity() {
                     Column {
                         Button(
                             onClick = {
-                                databaseRef.child(sessionId).child("users").child(user.userId)
-                                    .child("team").setValue("Red")
+                                FirebaseAccess.set_from_reference(
+                                    ref = databaseRef.child(sessionId).child("users").child(user.userId)
+                                        .child("team"),
+                                    onSucc = {
+
+                                    },
+                                    set = "Red",
+                                    onFail = {
+
+                                    }
+                                )
                                 showTeamDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -645,8 +644,17 @@ class MainActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                databaseRef.child(sessionId).child("users").child(user.userId)
-                                    .child("team").setValue("Blue")
+                                FirebaseAccess.set_from_reference(
+                                    ref = databaseRef.child(sessionId).child("users").child(user.userId)
+                                        .child("team"),
+                                    onSucc = {
+
+                                    },
+                                    set = "Blue",
+                                    onFail = {
+
+                                    }
+                                )
                                 showTeamDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -658,8 +666,17 @@ class MainActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                databaseRef.child(sessionId).child("users").child(user.userId)
-                                    .child("team").setValue("None")
+                                FirebaseAccess.set_from_reference(
+                                    ref = databaseRef.child(sessionId).child("users").child(user.userId)
+                                        .child("team"),
+                                    onSucc = {
+
+                                    },
+                                    set = "None",
+                                    onFail = {
+
+                                    }
+                                )
                                 showTeamDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -685,8 +702,13 @@ class MainActivity : ComponentActivity() {
                     Column {
                         Button(
                             onClick = {
-                                databaseRef.child(sessionId).child("users").child(user.userId)
-                                    .child("role").setValue("Admin")
+                                FirebaseAccess.set_from_reference(
+                                    ref = databaseRef.child(sessionId).child("users").child(user.userId)
+                                        .child("role"),
+                                    onSucc = {},
+                                    set = "Admin",
+                                    onFail = {}
+                                )
                                 showRoleDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -698,8 +720,13 @@ class MainActivity : ComponentActivity() {
 
                         Button(
                             onClick = {
-                                databaseRef.child(sessionId).child("users").child(user.userId)
-                                    .child("role").setValue("Player")
+                                FirebaseAccess.set_from_reference(
+                                    ref = databaseRef.child(sessionId).child("users").child(user.userId)
+                                        .child("role"),
+                                    onSucc = {},
+                                    set = "Player",
+                                    onFail = {}
+                                )
                                 showRoleDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()

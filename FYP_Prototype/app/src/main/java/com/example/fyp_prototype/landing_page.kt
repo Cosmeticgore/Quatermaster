@@ -385,36 +385,36 @@ class landing_page : ComponentActivity() {
         }
 
         fun saveandexit() {
-            val site = userdata.Cur_Site.value
+            val site = userdata.Cur_Site.value //sets local data
             val game = userdata.Cur_Game.value
 
             if (site != null && (game != null || mode == "Site")) {
-                if (mode == "Game") {
-                    userdata.Cur_Game.value?.markers = Markers
+                if (mode == "Game") { // if we are editing a game
+                    userdata.Cur_Game.value?.markers = Markers // set games marker list to markers created
 
-                    val Ref = database.getReference("sites").child(site.site_ID)
+                    val Ref = database.getReference("sites").child(site.site_ID) //create ref
                         .child("games")
                         .child(game?.gid ?: return)
                         .child("markers")
 
-                    FirebaseAccess.set_from_reference(Ref, onSucc = {
+                    FirebaseAccess.set_from_reference(Ref, onSucc = { // use ref to access DB
                         Log.d("SaveAndExit", "Markers saved successfully")
                         navController.navigateUp()
                     }, Markers, onFail = {
                         Log.e("SaveAndExit", "Failed to save markers")
-                        navController.navigateUp()
+                        navController.navigateUp()// go back to list
                     })
-                } else if (mode == "Site") {
+                } else if (mode == "Site") { // if we are editing a site save as site insted
                     userdata.Cur_Site.value?.markers = Markers
 
-                    val Ref = database.getReference("sites").child(site.site_ID)
+                    val Ref = database.getReference("sites").child(site.site_ID)  //create ref
                         .child("markers")
-                    FirebaseAccess.set_from_reference(Ref, onSucc = {
+                    FirebaseAccess.set_from_reference(Ref, onSucc = { // use ref to access DB
                         Log.d("SaveAndExit", "Markers saved successfully")
                         navController.navigateUp()
                     }, Markers, onFail = {
                         Log.e("SaveAndExit", "Failed to save markers")
-                        navController.navigateUp()
+                        navController.navigateUp()// go back to list
                     })
                 }
             } else {
@@ -422,20 +422,20 @@ class landing_page : ComponentActivity() {
             }
         }
 
-        fun getCurLocation() {
+        fun getCurLocation() { // sets the map to the current location of the use
             if (ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                fusedLocationClient.flushLocations().addOnSuccessListener{
-                    fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null)
+                fusedLocationClient.flushLocations().addOnSuccessListener{ // makes sure it gets a new location
+                    fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null) //sets it to high accuracy
                         .addOnSuccessListener { location: Location? ->
                             location?.let {
-                                val geoPoint = GeoPoint(it.latitude, it.longitude)
+                                val geoPoint = GeoPoint(it.latitude, it.longitude) // creates a geopoint at last known location
                                 currentLocation = geoPoint
 
-                                mapView.controller.setCenter(geoPoint)
+                                mapView.controller.setCenter(geoPoint) // set map to center on it
                                 mapView.controller.setZoom(20.0)
                                 mapView.invalidate()
                             }
@@ -499,7 +499,7 @@ class landing_page : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
                 AndroidView(// map view
                     modifier = Modifier.fillMaxSize(),
-                    factory = { mapView.apply {
+                    factory = { mapView.apply { // map view settings
                         setTileSource(TileSourceFactory.MAPNIK)
                         minZoomLevel = 17.0
                         maxZoomLevel = 20.0
@@ -508,7 +508,7 @@ class landing_page : ComponentActivity() {
                         setMultiTouchControls(true)
                         overlays.add(compassOverlay)
                     } },
-                    update = { mapView ->
+                    update = { mapView -> //updates view when state changes
                         mapView.overlays.clear()
                         Markers.forEach { marker ->
                             marker.draw(mapView, true)
@@ -518,7 +518,7 @@ class landing_page : ComponentActivity() {
                     }
                 )
 
-                Image(
+                Image( // crosshair for placement
                     painter = painterResource(id = R.drawable.crosshair),
                     contentDescription = "Crosshair",
                     modifier = Modifier.align(Alignment.Center)

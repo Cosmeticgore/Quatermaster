@@ -1,5 +1,6 @@
 package com.example.fyp_prototype
 
+import android.content.res.Configuration
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -111,7 +112,7 @@ fun TextinputDialog(onInputSubmitted: (String) -> Unit, Message: String) {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
+                OutlinedTextField( // input
                     value = input,
                     onValueChange = {
                         input = it
@@ -137,7 +138,7 @@ fun TextinputDialog(onInputSubmitted: (String) -> Unit, Message: String) {
                     Button(
                         onClick = {
                             if (input.trim().isNotEmpty()) {
-                                onInputSubmitted(input.trim())
+                                onInputSubmitted(input.trim()) // sends input
                             } else {
                                 isError = true
                             }
@@ -154,14 +155,14 @@ fun TextinputDialog(onInputSubmitted: (String) -> Unit, Message: String) {
 @Composable
 fun areyoursureDialog(OnConfirm: () -> Unit,OnDismiss:() -> Unit, Message: String){
     AlertDialog(
-        onDismissRequest = {OnDismiss()},
+        onDismissRequest = {OnDismiss()}, // callback if closed
         title = { Text(Message)},
         text = {},
-        confirmButton = {TextButton(onClick = { OnConfirm() }) {
+        confirmButton = {TextButton(onClick = { OnConfirm() }) { // confirm callback
             Text("Yes")
         }},
         dismissButton = {
-            TextButton(onClick = { OnDismiss() }) {
+            TextButton(onClick = { OnDismiss() }) { // cancel callback
                 Text("Cancel")
             }
         }
@@ -188,13 +189,12 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                         val name = sitesData["name"] as? String ?: ""
                         val siteId = sitesData["site_ID"] as? String ?: ""
 
-                        val userIDs = when (val rawUID = sitesData["users_IDs"]) {
+                        val userIDs = when (val rawUID = sitesData["users_IDs"]) { // converting the data into a list for site
                             is List<*> -> (rawUID as? List<String>) ?: emptyList()
-                            is Map<*,*> -> (rawUID as? Map<String, String>)?.values?.toList() ?: emptyList()
                             else -> emptyList()
                         }
 
-                        if (userIDs.contains(userdata.user_ID.value)){
+                        if (userIDs.contains(userdata.user_ID.value)){ // if user is in site IDs Then add the site to temp sites
                             tempsites.add(
                                 site(
                                     name = name,
@@ -210,7 +210,7 @@ fun site_view_screen(navController: NavController, userdata : AppData, edit: Boo
                     Log.e("FirebaseDebug", "Error deserializing SiteData", e)
                 }
             }
-            sites.value = tempsites
+            sites.value = tempsites //put tempsites into sites
         })
     }
 
@@ -324,6 +324,7 @@ private fun SiteDropdown(site: site, onSiteEditClick: (site) -> Unit){
 
     val database = FirebaseDatabase.getInstance()
     val databaseRef = database.getReference("sites")
+    val FirebaseAccess = FirebaseAccess()
 
     Box(modifier = Modifier.padding(16.dp))
     {
@@ -463,7 +464,12 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                                 userdata.Cur_Game.value = game
                                 val session_Ref = database.getReference("sessions")
                                     .child(userdata.Session_ID.value.toString())
-                                session_Ref.child("gid").setValue(game.gid)
+                                FirebaseAccess.set_from_reference(
+                                    session_Ref.child("gid"),
+                                    onSucc = {},
+                                    set = game.gid,
+                                    onFail = {},
+                                )
                                 navController.navigate("map")
                             }
                         },
@@ -481,7 +487,12 @@ fun games_list(navController: NavController, userdata: AppData, edit: Boolean){
                     val newgame = game(
                         name = Input
                     )
-                    databaseRef.child(newgame.gid).setValue(newgame).addOnSuccessListener{fetchgamelist()}
+                    FirebaseAccess.set_from_reference(
+                        databaseRef.child(newgame.gid),
+                        onSucc = {fetchgamelist()},
+                        set = newgame,
+                        onFail = {},
+                    )
                     showDialog = false
                 },
                 "Game Name"
@@ -733,14 +744,14 @@ fun LinePolyEditorDialog(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ){
-                OutlinedTextField(
+                OutlinedTextField( //title input
                     value = title,
                     onValueChange = {title = it},
                     label = { Text("Title") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                OutlinedTextField(
+                OutlinedTextField( //desc input
                     value = desc,
                     onValueChange = {desc = it},
                     label = { Text("Description") },
@@ -748,7 +759,7 @@ fun LinePolyEditorDialog(
                 )
 
                 Column {
-                    Text("Select Colour:")
+                    Text("Select Colour:") // sets colour of the poly
                     Box {
                         OutlinedTextField(
                             value = selectedColourOption,
@@ -782,7 +793,7 @@ fun LinePolyEditorDialog(
                     }
                 }
 
-                Column {
+                Column { // sets the weight
                     Text("Select Weight")
                     Box {
                         OutlinedTextField(
@@ -884,7 +895,7 @@ fun gametopbar(Button1Click: () -> Unit, Button2Click: () -> Unit,pingclick: () 
     var UrgentPingDialog by remember { mutableStateOf(false) }
 
     val configuration = LocalConfiguration.current
-    val Landscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val Landscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     TopAppBar(
         title = { // buttons in here
@@ -1188,7 +1199,7 @@ fun Join_session(userdata: AppData, firebaseAccess: FirebaseAccess,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), //only takes numerical input
             modifier = modifier.padding(4.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                containerColor = androidx.compose.ui.graphics.Color.White,
+                containerColor = Color.White,
             ),
         )
         button_common("Join Session", onClick = {
