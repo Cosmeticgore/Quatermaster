@@ -81,6 +81,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:$nav_version")
     testImplementation ("androidx.test:core:1.5.0")
     testImplementation ("io.mockk:mockk-android:1.13.10")
+    testImplementation ("org.robolectric:robolectric:4.10.3")
     androidTestImplementation ("io.mockk:mockk-android:1.13.10")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.1")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.1")

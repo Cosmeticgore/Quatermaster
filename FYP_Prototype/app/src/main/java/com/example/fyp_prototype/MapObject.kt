@@ -44,9 +44,9 @@ class MapObject {
 
     fun draw(map: MapView, red: Boolean){ //red false means team 1 is blue, true means team 1 is red
 
-        val geoPointsList = geopoints.map { GeoPoint(it.latitude, it.longitude) }
+        val geoPointsList = geopoints.map { GeoPoint(it.latitude, it.longitude) } // is a list because some markers have more than one
 
-        if (type == 0 && geoPointsList.isNotEmpty()) {
+        if (type == 0 && geoPointsList.isNotEmpty()) { // basic marker
             val point = geoPointsList.first()
             val marker = Marker(map)
             marker.position = point
@@ -55,13 +55,13 @@ class MapObject {
             marker.title = title
             marker.snippet = desc
 
-            val teamColor = when (team) {
+            val teamColor = when (team) { // setting teams
                 "Team 1" -> if (red) "red" else "blue"
                 "Team 2" -> if (red) "blue" else "red"
                 else -> "None"
             }
 
-            if (icon == "Respawn"){
+            if (icon == "Respawn"){ //respawn icon
                 if (teamColor == "red"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redrespawn)
                 }else if (teamColor == "blue"){
@@ -69,7 +69,7 @@ class MapObject {
                 }else{
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.greenrespawn)
                 }
-            }else if (icon == "Flag"){
+            }else if (icon == "Flag"){ // fleg icon
                 if (teamColor == "red"){
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.redflag)
                 }else if (teamColor == "blue"){
@@ -77,7 +77,7 @@ class MapObject {
                 }else{
                     marker.icon = ContextCompat.getDrawable(map.context,R.drawable.greenflag)
                 }
-            }else if (icon == "Warning"){
+            }else if (icon == "Warning"){ // warning icon
                 marker.icon = ContextCompat.getDrawable(map.context,R.drawable.emergency)
             }else{
                 if (teamColor == "red"){
@@ -89,29 +89,33 @@ class MapObject {
                 }
             }
 
-            map.overlays.add(marker)
+            map.overlays.add(marker) // add marker to the map
         }
 
-        if (type == 1 && geoPointsList.size > 1) {
+        if (type == 1 && geoPointsList.size > 1) { // drawing line
             val polyline = Polyline(map)
-            polyline.setPoints(geoPointsList)
+            polyline.setPoints(geoPointsList) // set points from geopoints list
 
             polyline.outlinePaint.color = colour
             polyline.outlinePaint.strokeWidth = width
+            polyline.title = title
+            polyline.snippet = desc
 
-            map.overlays.add(polyline)
+            map.overlays.add(polyline) // add to map
         }
 
-        if (type == 2 && geoPointsList.size > 2 ) {
+        if (type == 2 && geoPointsList.size > 2 ) { // drawing polygon
             val polygon = Polygon(map)
-            polygon.setPoints(geoPointsList)
+            polygon.setPoints(geoPointsList)// set points from geopoints list
             polygon.fillPaint.color = colour
             polygon.outlinePaint.strokeWidth = width
-            map.overlays.add(polygon)
+            polygon.title = title
+            polygon.snippet = desc
+            map.overlays.add(polygon) // add to map
         }
     }
 
-    data class GeoPointData(
+    data class GeoPointData( // needed to allow geopoints to be easily sent and retrieved from the database
         val latitude: Double = 0.0,
         val longitude: Double = 0.0
     ){

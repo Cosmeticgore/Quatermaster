@@ -35,16 +35,13 @@ import kotlin.random.Random
 class Create_Session_IT {
     @get:Rule
     val composeTestRule = createComposeRule()
-
     var mockFirebaseAccess = mockk<FirebaseAccess>()
-    var mockContext: Context = mockk()
     var mockuserData: AppData = mockk()
 
     @Test
     fun Create_Session_Fail(){
 
         //arrange
-
         val mockID = MutableLiveData("UID_123")
         val mockUsername = MutableLiveData("Kozi")
         val mockMessaging = mockk<FirebaseMessaging>()

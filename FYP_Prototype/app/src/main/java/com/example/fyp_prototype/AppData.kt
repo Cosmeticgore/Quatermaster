@@ -31,6 +31,7 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
     val Cur_Site= MutableLiveData<site?>()
     val Cur_Game= MutableLiveData<game?>()
     val userMarkers = mutableMapOf<String, Marker>()
+    var FirebaseAccess = FirebaseAccess()
 
     fun updateAppData(UID: String, SID: String, role: String, team: String, status: String){
         user_ID.value = UID
@@ -53,15 +54,23 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
 
     fun update_team(team: String) {
         val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("team").setValue(team)
-        Team.value = team
+        val databaseRef = database.getReference("sessions").child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("team")
+        FirebaseAccess.set_from_reference(
+            ref = databaseRef,
+            onSucc = {Team.value = team},
+            set = team,
+            onFail = {}
+        )
     }
 
     fun update_status(status: String) {
         val database = Firebase.database
-        val databaseRef = database.getReference("sessions")
-        databaseRef.child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("status").setValue(status)
-        Status.value = status
+        val databaseRef = database.getReference("sessions").child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("status")
+        FirebaseAccess.set_from_reference(
+            ref = databaseRef,
+            onSucc = {Status.value = status},
+            set = status,
+            onFail = { }
+        )
     }
 }
