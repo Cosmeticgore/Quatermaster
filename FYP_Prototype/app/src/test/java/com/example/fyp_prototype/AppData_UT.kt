@@ -37,8 +37,9 @@ class AppData_UT {
 
     @Test
     fun updateAppData(){
+        //act
         appData.updateAppData("123","321","Admin","Red","Nominal")
-
+        //assert
         assertEquals("123", appData.user_ID.value)
         assertEquals("321", appData.Session_ID.value)
         assertEquals("Admin", appData.Role.value)
@@ -48,10 +49,11 @@ class AppData_UT {
 
     @Test
     fun reset_data(){
+        //arrange
         appData.updateAppData("123","321","Admin","Red","Nominal")
-
+        //act
         appData.reset_data()
-
+        //assert
         assertEquals("", appData.user_ID.value)
         assertEquals("", appData.Session_ID.value)
         assertEquals("Player", appData.Role.value)
@@ -65,11 +67,9 @@ class AppData_UT {
 
     @Test
     fun update_team(){
-        appData.user_ID.value = "123"
-        appData.Session_ID.value = "321"
-
+        //act
         appData.update_team("Red")
-
+        //assert
         verify {
             mockAccess.set_from_reference(
                 ref = mockRef,
@@ -78,15 +78,14 @@ class AppData_UT {
                 onFail = any()
             )
         }
+        assertEquals("Red", appData.Team.value)
     }
 
     @Test
     fun update_status(){
-        appData.user_ID.value = "123"
-        appData.Session_ID.value = "321"
-
+        //act
         appData.update_status("I NEED A MEDIC BAG")
-
+        //assert
         verify {
             mockAccess.set_from_reference(
                 ref = mockRef,
@@ -95,11 +94,16 @@ class AppData_UT {
                 onFail = any()
             )
         }
+        assertEquals("I NEED A MEDIC BAG", appData.Status.value)
     }
 
     @Test
     fun appdata_singleton(){
+        //act
         val testinstance = AppData.getInstance(mockApp)
+        testinstance.Team.value = "blah"
+        //assert
         assertEquals(appData,testinstance)
+        assertEquals(appData.Team.value, "blah")
     }
 }

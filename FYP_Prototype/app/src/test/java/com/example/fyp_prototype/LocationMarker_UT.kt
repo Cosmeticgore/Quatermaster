@@ -28,18 +28,18 @@ class LocationMarker_UT {
         //arrange
         val currentUser = user(userId = "UID_123", team = "Red", role = "Player")
         val users = listOf(
-            user(userId = "UID_123", team = "Red", role = "Player"),
+            user(userId = "UID_123", team = "Blue", role = "Player"),
             user(userId = "UID_125", team = "Red", role = "Player")
         )
         var updatedUser: user? = null
 
         //act
-        locationMarker.handleUserupdates(currentUser,users,mockMap, updateAppData = { updatedUser = it})
+        locationMarker.handleUserupdates(currentUser,users,mockMap, updateAppData = { user -> updatedUser = user})
 
         //assert
         assert(updatedUser != null)
         assert(updatedUser?.userId == "UID_123")
-
+        assert(updatedUser?.team == "Blue")
     }
 
     @Test

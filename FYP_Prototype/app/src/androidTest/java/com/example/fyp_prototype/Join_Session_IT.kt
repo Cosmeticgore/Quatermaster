@@ -40,15 +40,6 @@ class Join_Session_IT {
     @Test
     fun Join_Session_Input_Visable_nocode() {
         //arrange
-        val callbackCap = slot<(DataSnapshot) -> Unit>()
-
-        every { mockFirebaseAccess.get_from_reference(any(), capture(callbackCap)) } answers {
-            val fakeSnap = mockk<DataSnapshot> {
-                every { exists() } returns true
-            }
-            callbackCap.captured.invoke(fakeSnap)
-        }
-
         val snackbarHostState = SnackbarHostState()
         composeTestRule.setContent {
             Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
@@ -69,7 +60,6 @@ class Join_Session_IT {
         }
         //act
 
-
         composeTestRule.onNodeWithText("Join Session").performClick()
 
         //assert
@@ -89,11 +79,10 @@ class Join_Session_IT {
     fun Join_Session_Input_Visable_wrongcode() {
 
         //arrange
-
         val callbackCap = slot<(DataSnapshot) -> Unit>()
         val mockID = MutableLiveData("UID_123")
         val mockUsername = MutableLiveData("Kozi")
-
+        val snackbarHostState = SnackbarHostState()
 
         every { mockuserData.user_ID } returns mockID
         every { mockuserData.Username } returns mockUsername
@@ -105,7 +94,7 @@ class Join_Session_IT {
             callbackCap.captured.invoke(fakeSnap)
         }
 
-        val snackbarHostState = SnackbarHostState()
+
         composeTestRule.setContent {
             Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
                 Box(// make sure everything aligns

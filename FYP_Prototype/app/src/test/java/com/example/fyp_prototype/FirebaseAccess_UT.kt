@@ -17,6 +17,10 @@ import org.junit.Test
 class FirebaseAccess_UT {
 
     private lateinit var firebaseAccess: FirebaseAccess
+    val mockRef = mockk<DatabaseReference>(relaxed = true)
+    val mockTask = mockk<Task<Void>>(relaxed = true)
+    val onSucc = mockk<() -> Unit>(relaxed = true)
+    val onFail = mockk<(Exception) -> Unit>(relaxed = true)
 
     @Before
     fun setup() {
@@ -26,7 +30,6 @@ class FirebaseAccess_UT {
     @Test
     fun firebaseaccess_get_from_reference_callback(){
         //arrange
-        val mockRef = mockk<DatabaseReference>(relaxed = true)
         val mockSnap = mockk<DataSnapshot>()
         val listenerSlot = slot<ValueEventListener>()
         var result: DataSnapshot? = null
@@ -34,23 +37,21 @@ class FirebaseAccess_UT {
         every { mockRef.addListenerForSingleValueEvent(capture(listenerSlot)) } answers {}
 
         //Act
-        firebaseAccess.get_from_reference(mockRef){
-            result = it
-        }
+        firebaseAccess.get_from_reference(mockRef, callback = {
+            snapshot ->
+            result = snapshot
+        })
         listenerSlot.captured.onDataChange(mockSnap)
 
         // assert
-        assert(result === mockSnap)
+        assert(result == mockSnap)
 
     }
 
     @Test
     fun firebaseaccess_set_from_reference_callback(){
-        val mockRef = mockk<DatabaseReference>(relaxed = true)
-        val mockTask = mockk<Task<Void>>(relaxed = true)
+        //arrange
         val succSlot = slot<OnSuccessListener<Void>>()
-        val onSucc = mockk<() -> Unit>(relaxed = true)
-        val onFail = mockk<(Exception) -> Unit>(relaxed = true)
 
         every {mockRef.setValue(any()) } returns mockTask
         every {mockTask.addOnSuccessListener(capture(succSlot)) } returns mockTask
@@ -64,13 +65,10 @@ class FirebaseAccess_UT {
 
     @Test
     fun firebaseaccess_set_from_reference_callback_fail(){
-        val mockRef = mockk<DatabaseReference>(relaxed = true)
-        val mockTask = mockk<Task<Void>>(relaxed = true)
+        //arrange
         val excep = Exception("Failed")
         val succSlot = slot<OnSuccessListener<Void>>()
         val failSlot = slot<OnFailureListener>()
-        val onSucc = mockk<() -> Unit>(relaxed = true)
-        val onFail = mockk<(Exception) -> Unit>(relaxed = true)
 
         every {mockRef.setValue(any()) } returns mockTask
         every {mockTask.addOnSuccessListener(capture(succSlot)) } returns mockTask

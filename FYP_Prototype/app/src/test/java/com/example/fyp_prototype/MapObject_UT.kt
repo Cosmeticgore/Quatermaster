@@ -78,7 +78,10 @@ class MapObject_UT {
     @Test
     fun draw_poly_marker(){
         //arrange
-        val testGeopoints = mutableListOf(MapObject.GeoPointData(2.0,-1.0), MapObject.GeoPointData(3.0,-2.0),MapObject.GeoPointData(3.0,-3.0),MapObject.GeoPointData(4.0,-2.0))
+        val testGeopoints = mutableListOf(MapObject.GeoPointData(2.0,-1.0),
+            MapObject.GeoPointData(3.0,-2.0),
+            MapObject.GeoPointData(3.0,-3.0),
+            MapObject.GeoPointData(4.0,-2.0))
 
         val testmapObject = MapObject(
             type = 2, // 2 for polygon

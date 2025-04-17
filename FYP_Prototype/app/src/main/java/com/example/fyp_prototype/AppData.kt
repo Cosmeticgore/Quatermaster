@@ -57,10 +57,11 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         val databaseRef = database.getReference("sessions").child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("team")
         FirebaseAccess.set_from_reference(
             ref = databaseRef,
-            onSucc = {Team.value = team},
+            onSucc = {},
             set = team,
             onFail = {}
         )
+        Team.value = team
     }
 
     fun update_status(status: String) {
@@ -68,9 +69,10 @@ class AppData private constructor(application: Application) : AndroidViewModel(a
         val databaseRef = database.getReference("sessions").child(Session_ID.value.toString()).child("users").child(user_ID.value.toString()).child("status")
         FirebaseAccess.set_from_reference(
             ref = databaseRef,
-            onSucc = {Status.value = status},
+            onSucc = {},
             set = status,
             onFail = { }
         )
+        Status.value = status
     }
 }

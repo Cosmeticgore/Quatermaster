@@ -50,16 +50,15 @@ class Create_Session_IT {
         val userCaptor = slot<user>()
         val sessionIdCaptor = slot<String>()
         var onSucc = false
+        val snackbarHostState = SnackbarHostState()
+        val onFailCaptor = slot<(Exception) -> Unit>()
+
+        mockkStatic(Random::class)
+        mockkStatic(FirebaseMessaging::class)
 
         every { mockuserData.user_ID } returns mockID
         every { mockuserData.Username } returns mockUsername
-
-        mockkStatic(Random::class)
         every { Random.nextInt(100000,999999) } returns 123456
-        mockkStatic(FirebaseMessaging::class)
-
-        val snackbarHostState = SnackbarHostState()
-
         every { FirebaseMessaging.getInstance() } returns mockMessaging
         every { mockMessaging.token } returns mockTask
         every {mockTask.addOnCompleteListener(capture(mockListener))} answers {
@@ -72,8 +71,6 @@ class Create_Session_IT {
             listen.onComplete(succTask)
             mockTask
         }
-
-        val onFailCaptor = slot<(Exception) -> Unit>()
         every {mockFirebaseAccess.set_from_reference(
             any(),
             any(),
@@ -137,17 +134,17 @@ class Create_Session_IT {
         val userCaptor = slot<user>()
         val sessionIdCaptor = slot<String>()
         var onSucc = false
-
-        every { mockuserData.user_ID } returns mockID
-        every { mockuserData.Username } returns mockUsername
+        val snackbarHostState = SnackbarHostState()
+        val sessionCaptor = slot<session>()
+        val onSuccCaptor = slot<() -> Unit>()
 
         mockkStatic(Random::class)
-        every { Random.nextInt(100000,999999) } returns 123456
         mockkStatic(FirebaseMessaging::class)
 
-        val snackbarHostState = SnackbarHostState()
-
-        every { FirebaseMessaging.getInstance() } returns mockMessaging
+        every { mockuserData.user_ID } returns mockID //return user ID
+        every { mockuserData.Username } returns mockUsername // return username
+        every { Random.nextInt(100000,999999) } returns 123456 // return session id consitent
+        every { FirebaseMessaging.getInstance() } returns mockMessaging //return mock instead
         every { mockMessaging.token } returns mockTask
         every {mockTask.addOnCompleteListener(capture(mockListener))} answers {
             val listen = mockListener.captured
@@ -159,15 +156,12 @@ class Create_Session_IT {
             listen.onComplete(succTask)
             mockTask
         }
-
-        val sessionCaptor = slot<session>()
-        val onSuccCaptor = slot<() -> Unit>()
         every {mockFirebaseAccess.set_from_reference(any(), capture(onSuccCaptor), capture(sessionCaptor), any())
         }answers {
             onSuccCaptor.captured.invoke()
         }
 
-        composeTestRule.setContent {
+        composeTestRule.setContent { //setup compose
             Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
                 Box(// make sure everything aligns
                     modifier = Modifier
